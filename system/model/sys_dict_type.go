@@ -8,3 +8,7 @@ type SysDictType struct {
 	Status int8   `json:"status" form:"status" gorm:"comment:状态(1:正常;0:禁用)"` // 状态(1:正常;0:禁用)
 	Remark string `json:"remark" form:"remark" gorm:"comment:备注"`            //备注
 }
+
+func (SysDictType) TableName() string {
+	return "sys_dict_type"
+}

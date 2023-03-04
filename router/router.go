@@ -23,6 +23,7 @@ func Routers() *gin.Engine {
 	sr := system.DictItemRouter{}
 	{
 		sr.InitDictItemRouter(api)
+		sr.InitDictTypeRouter(api)
 	}
 	return r
 }

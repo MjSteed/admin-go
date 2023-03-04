@@ -9,11 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: DeleteSysDictionary
 //@description: 创建字典数据
-//@param: sysDictionary model.SysDictionary
-//@return: err error
 
 type DictItemService struct {
 }
@@ -34,12 +30,39 @@ func (dictItemService *DictItemService) UpdateDictItem(sysDictItem model.SysDict
 	return err
 }
 
+// 字典类型code变化，同步修改字典项的类型code
+// @param oldCode 旧code
+// @param newCode 新code
+func (dictItemService *DictItemService) UpdateOldCodeToNew(oldCode string, newCode string) (err error) {
+	if oldCode == newCode {
+		return nil
+	}
+	return common.DB.Model(&model.SysDictItem{}).Where("type_code = ?", oldCode).Updates(model.SysDictItem{TypeCode: newCode}).Error
+}
+
 // @param: ids 待删除的字典数据项ID
 func (dictItemService *DictItemService) DeleteDictItems(ids []int64) (err error) {
 	if ids == nil || len(ids) <= 0 {
 		return errors.New("删除数据为空")
 	}
 	tx := common.DB.Delete(&model.SysDictItem{}, ids)
+	if err = tx.Error; err != nil {
+		err = tx.Error
+		return err
+	}
+	if tx.RowsAffected == 0 {
+		err = errors.New("删除失败")
+		return err
+	}
+	return nil
+}
+
+// @param: ids 待删除的字典数据项ID
+func (dictItemService *DictItemService) DeleteDictItemsByCode(codes []string) (err error) {
+	if codes == nil || len(codes) <= 0 {
+		return errors.New("删除数据为空")
+	}
+	tx := common.DB.Where("type_code in ?", codes).Delete(&model.SysDictItem{})
 	if err = tx.Error; err != nil {
 		err = tx.Error
 		return err
@@ -58,7 +81,7 @@ func (dictItemService *DictItemService) ListDictItemPages(pageReq dto.DictItemPa
 		tx = tx.Where("`name` like ?", "%"+pageReq.Keywords+"%")
 	}
 	if pageReq.TypeCode != "" {
-		tx = tx.Where("`typeCode` like ?", "%"+pageReq.TypeCode+"%")
+		tx = tx.Where("`type_code` like ?", "%"+pageReq.TypeCode+"%")
 	}
 	err = tx.Count(&total).Error
 	if err != nil {

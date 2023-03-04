@@ -13,7 +13,7 @@ var DB *gorm.DB
 // Database 在中间件中初始化mysql链接
 func init() {
 	mysqlConfig := mysql.Config{
-		DSN: "root:root@(127.0.0.1:3306)/test?charset=utf8&parseTime=True&loc=Local", // DSN data source name
+		DSN: "root:root@(192.168.1.34:3306)/test?charset=utf8&parseTime=True&loc=Local", // DSN data source name
 	}
 	db, err := gorm.Open(mysql.New(mysqlConfig))
 	if err != nil {
