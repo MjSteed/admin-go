@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	"github.com/MjSteed/vue3-element-admin-go/router/system"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,6 +18,11 @@ func Routers() *gin.Engine {
 		pg.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, "ok")
 		})
+	}
+	api := r.Group("/api")
+	sr := system.DictItemRouter{}
+	{
+		sr.InitDictItemRouter(api)
 	}
 	return r
 }

@@ -1,6 +1,8 @@
 package common
 
 import (
+	"fmt"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -9,19 +11,14 @@ import (
 var DB *gorm.DB
 
 // Database 在中间件中初始化mysql链接
-func Database(connString string) {
+func init() {
 	mysqlConfig := mysql.Config{
-		DSN:                       "",    // DSN data source name
-		DefaultStringSize:         64,    // string 类型字段的默认长度
-		SkipInitializeWithVersion: false, // 根据版本自动配置
+		DSN: "root:root@(127.0.0.1:3306)/test?charset=utf8&parseTime=True&loc=Local", // DSN data source name
 	}
-	if db, err := gorm.Open(mysql.New(mysqlConfig)); err != nil {
-
-	} else {
-		db.InstanceSet("gorm:table_options", "ENGINE="+m.Engine)
-		sqlDB, _ := db.DB()
-		sqlDB.SetMaxIdleConns(100)
-		sqlDB.SetMaxOpenConns(5)
-		DB = db
+	db, err := gorm.Open(mysql.New(mysqlConfig))
+	if err != nil {
+		fmt.Println("数据库连接失败")
+		return
 	}
+	DB = db
 }

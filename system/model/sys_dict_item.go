@@ -11,3 +11,7 @@ type SysDictItem struct {
 	Defaulted int8   `json:"defaulted" form:"defaulted" gorm:"comment:是否默认(1:是;0:否)"` //是否默认(1:是;0:否)
 	Remark    string `json:"remark" form:"remark" gorm:"comment:备注"`                  //备注
 }
+
+func (SysDictItem) TableName() string {
+	return "sys_dict_item"
+}
