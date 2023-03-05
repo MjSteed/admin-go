@@ -25,6 +25,7 @@ func Routers() *gin.Engine {
 		sr.InitDictItemRouter(api)
 		sr.InitDictTypeRouter(api)
 		sr.InitDeptRouter(api)
+		sr.InitMenuRouter(api)
 	}
 	return r
 }

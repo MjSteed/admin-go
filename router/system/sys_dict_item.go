@@ -39,3 +39,15 @@ func (rt *DictItemRouter) InitDeptRouter(Router *gin.RouterGroup) {
 	r.PUT("", api.Update)
 	r.DELETE("/:ids", api.BatchDelete)
 }
+
+func (rt *DictItemRouter) InitMenuRouter(Router *gin.RouterGroup) {
+	api := api.MenuApi{}
+	r := Router.Group("/v1/menus")
+	r.GET("/resources", api.ListResources)
+	r.GET("", api.List)
+	r.GET("/options", api.ListOptions)
+	r.GET("/routes", api.ListRoutes)
+	r.POST("", api.Save)
+	r.PUT("", api.Update)
+	r.DELETE("/:ids", api.BatchDelete)
+}
