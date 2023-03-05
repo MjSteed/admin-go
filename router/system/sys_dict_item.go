@@ -28,3 +28,14 @@ func (rt *DictItemRouter) InitDictTypeRouter(Router *gin.RouterGroup) {
 	//路由冲突
 	// r.GET("/:typeCode/items", api.ListDictItemsByTypeCode)
 }
+
+func (rt *DictItemRouter) InitDeptRouter(Router *gin.RouterGroup) {
+	api := api.DeptApi{}
+	r := Router.Group("/v1/dept")
+	r.GET("", api.ListPages)
+	r.GET("/options", api.ListOptions)
+	r.GET("/:id/form", api.GetForm)
+	r.POST("", api.Save)
+	r.PUT("", api.Update)
+	r.DELETE("/:ids", api.BatchDelete)
+}
