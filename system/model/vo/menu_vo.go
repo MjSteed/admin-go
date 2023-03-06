@@ -1,27 +1,23 @@
 package vo
 
 import (
-	"time"
-
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 )
 
 type Menu struct {
-	Id         int64
-	ParentId   int64
-	Name       string
-	Icon       string
-	RouteName  string
-	RoutePath  string
-	Component  string
-	Redirect   string
-	Sort       int
-	Visible    int
-	Type       int
-	Perm       string
-	Children   []Menu
-	CreateTime time.Time
-	UpdateTime time.Time
+	Id        int64  `json:"id"`
+	ParentId  int64  `json:"parentId"`
+	Name      string `json:"name"`
+	Icon      string `json:"icon"`
+	RouteName string `json:"routeName"`
+	RoutePath string `json:"routePath"`
+	Component string `json:"component"`
+	Redirect  string `json:"redirect"`
+	Sort      int    `json:"sort"`
+	Visible   int    `json:"visible"`
+	Type      int    `json:"type"`
+	Perm      string `json:"perm"`
+	Children  []Menu `json:"children"`
 }
 
 func (m *Menu) Format(d model.SysMenu) (v Menu) {
@@ -29,8 +25,6 @@ func (m *Menu) Format(d model.SysMenu) (v Menu) {
 	v.ParentId = d.ParentId
 	v.Name = d.Name
 	v.Sort = d.Sort
-	v.CreateTime = d.CreateTime
-	v.UpdateTime = d.UpdateTime
 	v.Icon = d.Icon
 	v.Component = d.Component
 	v.Redirect = d.RedirectUrl

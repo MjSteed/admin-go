@@ -10,6 +10,7 @@ import (
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	s_vo "github.com/MjSteed/vue3-element-admin-go/system/model/vo"
+	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
 
@@ -18,6 +19,7 @@ type MenuService struct{}
 
 // 获取菜单表格列表
 func (service *MenuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu, err error) {
+	common.LOG.Debug("查询菜单表格参数", zap.Int("PageNum", pageReq.PageNum), zap.Int("PageSize", pageReq.PageSize), zap.String("Keywords", pageReq.Keywords))
 	tx := common.DB.Model(&model.SysMenu{})
 	if pageReq.Keywords != "" {
 		tx = tx.Where("`name` like ?", "%"+pageReq.Keywords+"%")
