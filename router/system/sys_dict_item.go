@@ -65,3 +65,12 @@ func (rt *DictItemRouter) InitRolesRouter(Router *gin.RouterGroup) {
 	r.GET("/:id/menuIds", api.GetRoleMenuIds)
 	r.PUT("/:id/menus", api.UpdateRoleMenus)
 }
+
+func (rt *DictItemRouter) InitUserRouter(Router *gin.RouterGroup) {
+	r := Router.Group("/v1/users")
+	r.GET("/pages", api.UserApi.List)
+	r.GET("/:id/form", api.UserApi.GetForm)
+	r.POST("", api.UserApi.Save)
+	r.PUT("", api.UserApi.Update)
+	r.DELETE("/:ids", api.UserApi.BatchDelete)
+}
