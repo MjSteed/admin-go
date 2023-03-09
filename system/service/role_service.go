@@ -8,18 +8,21 @@ import (
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
 )
 
 // 角色业务接口层
-type RoleService struct {
+type roleService struct {
 }
+
+var RoleService = new(roleService)
 
 // 超级管理员角色编码
 const ROOT_ROLE_CODE = "ROOT"
 
 // 角色分页列表
-func (service *RoleService) ListPages(pageReq dto.DeptPageReq) (list []model.SysRole, total int64, err error) {
+func (service *roleService) ListPages(pageReq dto.DeptPageReq) (list []model.SysRole, total int64, err error) {
 	common.LOG.Debug("查询角色分页参数", zap.Int("PageNum", pageReq.PageNum), zap.Int("PageSize", pageReq.PageSize), zap.String("Keywords", pageReq.Keywords))
 	tx := common.DB.Model(&list)
 	if pageReq.Keywords != "" {
@@ -35,7 +38,7 @@ func (service *RoleService) ListPages(pageReq dto.DeptPageReq) (list []model.Sys
 }
 
 // 角色下拉列表
-func (service *RoleService) ListOptions() (list []vo.TreeOption) {
+func (service *roleService) ListOptions() (list []vo.TreeOption) {
 	var roles []model.SysRole
 	err := common.DB.Model(&model.SysRole{}).Where("`code` != ?", ROOT_ROLE_CODE).Find(&roles).Error
 	if err != nil {
@@ -49,13 +52,13 @@ func (service *RoleService) ListOptions() (list []vo.TreeOption) {
 }
 
 // 角色详情
-func (service *RoleService) GetById(id int64) (r model.SysRole) {
+func (service *roleService) GetById(id int64) (r model.SysRole) {
 	common.DB.First(&r, id)
 	return
 }
 
 // 新增或更新
-func (service *RoleService) Save(data model.SysRole) (err error) {
+func (service *roleService) Save(data model.SysRole) (err error) {
 	tx := common.DB.Model(&data)
 	if data.Id > 0 {
 		tx = tx.Where("id != ?", data.Id)
@@ -75,13 +78,13 @@ func (service *RoleService) Save(data model.SysRole) (err error) {
 }
 
 // 修改角色状态
-func (service *RoleService) UpdateStatus(id int64, status int) (err error) {
+func (service *roleService) UpdateStatus(id int64, status int) (err error) {
 	err = common.DB.Model(&model.SysRole{Id: id}).Update("status", status).Error
 	return
 }
 
 // 批量删除
-func (service *RoleService) DeleteByIds(ids []int64) error {
+func (service *roleService) DeleteByIds(ids []int64) error {
 	var c int64
 	common.DB.Model(&model.SysUserRole{}).Where("role_id in ?", ids).Count(&c)
 	if c > 0 {
@@ -100,7 +103,7 @@ func (service *RoleService) DeleteByIds(ids []int64) error {
 }
 
 // 获取角色的资源ID集合,资源包括菜单和权限
-func (service *RoleService) GetRoleMenuIds(id int64) (menus []int64) {
+func (service *roleService) GetRoleMenuIds(id int64) (menus []int64) {
 	sql := `SELECT
 				rm.menu_id
 			FROM
@@ -112,7 +115,7 @@ func (service *RoleService) GetRoleMenuIds(id int64) (menus []int64) {
 }
 
 // 修改角色的资源权限
-func (service *RoleService) UpdateRoleMenus(id int64, menuIds []int64) error {
+func (service *roleService) UpdateRoleMenus(id int64, menuIds []int64) error {
 	return common.DB.Transaction(func(tx *gorm.DB) error {
 		err := tx.Where("`role_id` = ?", id).Delete(&model.SysUserRole{}).Error
 		if err != nil {
@@ -128,11 +131,60 @@ func (service *RoleService) UpdateRoleMenus(id int64, menuIds []int64) error {
 }
 
 // 获取最大范围的数据权限
-func (service *RoleService) GetMaximumDataScope(roles []string) (max int, err error) {
+func (service *roleService) GetMaximumDataScope(roles []string) (max int, err error) {
 	if len(roles) > 0 {
 		common.DB.Raw("SELECT min(data_scope) FROM sys_role where code in ?", roles).Find(&max)
 	} else {
 		common.DB.Raw("SELECT min(data_scope) FROM sys_role where id=-1").Find(&max)
 	}
 	return
+}
+
+// 保存用户角色
+func (service *roleService) SaveUserRoles(tx *gorm.DB, userId int64, roleIds []int64) error {
+	if userId == 0 || len(roleIds) == 0 {
+		common.LOG.Debug("用户id或角色id列表为空，不保存角色关系")
+		return nil
+	}
+	//用户原角色ID集合
+	var userRoleIds []int64
+	err := tx.Model(&model.SysUserRole{}).Select("role_id").Find(&userRoleIds).Error
+	if err != nil {
+		return err
+	}
+	//新增用户角色
+	var saveRoleIds []int64
+	if len(userRoleIds) == 0 {
+		saveRoleIds = userRoleIds
+	} else {
+		for _, v := range roleIds {
+			if !slices.Contains(userRoleIds, v) {
+				saveRoleIds = append(saveRoleIds, v)
+			}
+		}
+	}
+	var saveUserRoles []model.SysUserRole
+	for _, v := range saveRoleIds {
+		saveUserRoles = append(saveUserRoles, model.SysUserRole{UserId: userId, RoleId: v})
+	}
+	err = tx.Create(&saveUserRoles).Error
+	if err != nil {
+		return err
+	}
+
+	//删除用户角色
+	if len(userRoleIds) == 0 {
+		return nil
+	}
+	var removeRoleIds []int64
+	for _, v := range userRoleIds {
+		if !slices.Contains(roleIds, v) {
+			removeRoleIds = append(removeRoleIds, v)
+		}
+	}
+	if len(removeRoleIds) == 0 {
+		return nil
+	}
+	err = tx.Where("user_id = ?", userId).Where("role_id in ?", removeRoleIds).Delete(&model.SysUserRole{}).Error
+	return err
 }

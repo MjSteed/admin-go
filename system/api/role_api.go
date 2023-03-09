@@ -22,8 +22,7 @@ func (a RoleApi) List(c *gin.Context) {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.RoleService{}
-	list, total, err := service.ListPages(pageParam)
+	list, total, err := service.RoleService.ListPages(pageParam)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -34,8 +33,7 @@ func (a RoleApi) List(c *gin.Context) {
 // 角色下拉列表
 // @Router    /api/v1/roles/options [get]
 func (a RoleApi) ListOptions(c *gin.Context) {
-	service := service.RoleService{}
-	vo.SuccessData(service.ListOptions(), c)
+	vo.SuccessData(service.RoleService.ListOptions(), c)
 }
 
 // 角色详情
@@ -46,8 +44,7 @@ func (a RoleApi) GetForm(c *gin.Context) {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.RoleService{}
-	r := service.GetById(id)
+	r := service.RoleService.GetById(id)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -64,8 +61,7 @@ func (a RoleApi) Save(c *gin.Context) {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.RoleService{}
-	err = service.Save(d)
+	err = service.RoleService.Save(d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -82,8 +78,7 @@ func (a RoleApi) Update(c *gin.Context) {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.RoleService{}
-	err = service.Save(d)
+	err = service.RoleService.Save(d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -103,8 +98,7 @@ func (a RoleApi) BatchDelete(c *gin.Context) {
 		}
 		ids = append(ids, id)
 	}
-	service := service.RoleService{}
-	err := service.DeleteByIds(ids)
+	err := service.RoleService.DeleteByIds(ids)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -125,8 +119,7 @@ func (a RoleApi) UpdateRoleStatus(c *gin.Context) {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.RoleService{}
-	err = service.UpdateStatus(id, int(status))
+	err = service.RoleService.UpdateStatus(id, int(status))
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -142,8 +135,7 @@ func (a RoleApi) GetRoleMenuIds(c *gin.Context) {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.RoleService{}
-	menus := service.GetRoleMenuIds(id)
+	menus := service.RoleService.GetRoleMenuIds(id)
 	vo.SuccessData(menus, c)
 }
 
@@ -161,8 +153,7 @@ func (a RoleApi) UpdateRoleMenus(c *gin.Context) {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.RoleService{}
-	err = service.UpdateRoleMenus(id, menus)
+	err = service.RoleService.UpdateRoleMenus(id, menus)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return

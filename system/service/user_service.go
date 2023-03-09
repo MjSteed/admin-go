@@ -7,6 +7,7 @@ import (
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/vo"
+	"gorm.io/gorm"
 )
 
 type userService struct{}
@@ -42,7 +43,7 @@ func (service *userService) GetById(id int64) (data model.SysUser, err error) {
 }
 
 // 新增用户
-func (service *userService) Save(data model.SysUser) (err error) {
+func (service *userService) Save(data dto.UserForm) (err error) {
 	var c int64
 	err = common.DB.Model(&data).Where("username = ?", data.Username).Count(&c).Error
 	if err != nil {
@@ -52,13 +53,19 @@ func (service *userService) Save(data model.SysUser) (err error) {
 		err = errors.New("用户名已存在")
 		return
 	}
-	err = common.DB.Create(&data).Error
-	//TODO 保存用户角色
+	user := data.ToUser()
+	err = common.DB.Transaction(func(tx *gorm.DB) error {
+		err = tx.Create(&user).Error
+		if err != nil {
+			return err
+		}
+		return RoleService.SaveUserRoles(tx, user.Id, data.RoleIds)
+	})
 	return
 }
 
 // 修改用户
-func (service *userService) Update(data model.SysUser) (err error) {
+func (service *userService) Update(data dto.UserForm) (err error) {
 	var c int64
 	err = common.DB.Model(&data).Where("username = ?", data.Username).Where("id != ?", data.Id).Count(&c).Error
 	if err != nil {
@@ -68,8 +75,14 @@ func (service *userService) Update(data model.SysUser) (err error) {
 		err = errors.New("用户名已存在")
 		return
 	}
-	err = common.DB.Updates(&data).Error
-	//TODO 保存用户角色
+	user := data.ToUser()
+	err = common.DB.Transaction(func(tx *gorm.DB) error {
+		err = tx.Updates(&user).Error
+		if err != nil {
+			return err
+		}
+		return RoleService.SaveUserRoles(tx, user.Id, data.RoleIds)
+	})
 	return
 }
 
