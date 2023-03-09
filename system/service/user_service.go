@@ -7,12 +7,15 @@ import (
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/vo"
+	"github.com/MjSteed/vue3-element-admin-go/utils"
 	"gorm.io/gorm"
 )
 
 type userService struct{}
 
 var UserService = new(userService)
+
+const defaultPassword = "123456"
 
 // 用户分页列表
 func (service *userService) ListPages(pageReq dto.UserPageReq) (list []vo.SysUser, total int64, err error) {
@@ -54,6 +57,7 @@ func (service *userService) Save(data dto.UserForm) (err error) {
 		return
 	}
 	user := data.ToUser()
+	user.Password = utils.BcryptMakeStr(defaultPassword)
 	err = common.DB.Transaction(func(tx *gorm.DB) error {
 		err = tx.Create(&user).Error
 		if err != nil {
@@ -94,7 +98,7 @@ func (service *userService) DeleteByIds(ids []int64) (err error) {
 
 // 修改用户密码
 func (service *userService) UpdatePassword(id int64, password string) (err error) {
-	err = common.DB.Model(&model.SysUser{Id: id}).Update("password", password).Error
+	err = common.DB.Model(&model.SysUser{Id: id}).Update("password", utils.BcryptMakeStr(password)).Error
 	return
 }
 
