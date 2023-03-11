@@ -8,6 +8,7 @@ import (
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/vo"
 	"github.com/MjSteed/vue3-element-admin-go/utils"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -104,5 +105,63 @@ func (service *userService) UpdatePassword(id int64, password string) (err error
 
 // 根据用户名获取认证信息
 func (service *userService) GetAuthInfo(username string) (data model.SysUser, err error) {
+	return
+}
+
+// 登录
+func (service *userService) Login(username string, password string) (user *model.SysUser, err error) {
+	err = common.DB.Where("username = ?", username).First(&user).Error
+	if err != nil || !utils.BcryptMakeCheckStr(password, user.Password) {
+		err = errors.New("用户名不存在或密码错误")
+	}
+	return
+}
+
+// 登录后获取用户相关信息
+func (service *userService) GetUserInfo(id int64) (user *vo.UserAuthInfo, err error) {
+	// sql := `SELECT
+	// 			t1.id user_id,
+	// 			t1.username,
+	// 			t1.nickname,
+	// 			t1.password,
+	// 			t1.status,
+	// 			t1.dept_id ,
+	// 			t3.code roles
+	// 		FROM
+	// 			sys_user t1
+	// 			LEFT JOIN sys_user_role t2 ON t2.user_id = t1.id
+	// 			LEFT JOIN sys_role t3 ON t3.id = t2.role_id
+	// 		WHERE t1.id = ? AND t1.deleted=0`
+	sql := `SELECT
+				t1.id user_id,
+				t1.username,
+				t1.nickname,
+				t1.password,
+				t1.status,
+				t1.dept_id 
+			FROM 
+				sys_user t1
+			WHERE t1.id = ? AND t1.deleted=0`
+	err = common.DB.Raw(sql, id).First(&user).Error
+	common.LOG.Debug("查询到用户信息", zap.Any("用户", user))
+	if err != nil {
+		return
+	}
+	sql = `select t3.code from sys_user_role t2
+		LEFT JOIN sys_role t3 ON t3.id = t2.role_id
+		where t2.user_id=?
+		`
+	var roles []string
+	err = common.DB.Raw(sql, id).First(&roles).Error
+	if err != nil {
+		return
+	}
+	user.Roles = roles
+	menuService := MenuService{}
+	if len(user.Roles) > 0 {
+		user.Perms = menuService.ListRolePerms(user.Roles)
+	}
+	roleService := roleService{}
+	user.DataScope, err = roleService.GetMaximumDataScope(user.Roles)
 	return
 }

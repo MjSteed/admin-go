@@ -38,3 +38,9 @@ func (m *UserForm) ToUser() model.SysUser {
 	}
 	return d
 }
+
+//登录
+type Login struct {
+	Username string `form:"username"`
+	Password string `form:"password"`
+}

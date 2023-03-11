@@ -15,3 +15,15 @@ type SysUser struct {
 	RoleNames   string    `json:"roleNames"`
 	CreateTime  time.Time `json:"createTime"`
 }
+
+type UserAuthInfo struct {
+	UserId    string   `json:"userId"`
+	Username  string   `json:"username"`
+	Nickname  string   `json:"nickname"`
+	Password  string   `json:"password"`
+	Status    int      `json:"status"`
+	DeptId    int64    `json:"deptId"`
+	Roles     []string `json:"roles"`
+	Perms     []string `json:"perms"`
+	DataScope int      `json:"dataScope"`
+}

@@ -4,11 +4,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/MjSteed/vue3-element-admin-go/common"
 	"github.com/MjSteed/vue3-element-admin-go/common/model/vo"
-	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	"github.com/MjSteed/vue3-element-admin-go/system/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type userApi struct{}
@@ -51,7 +52,7 @@ func (a *userApi) GetForm(c *gin.Context) {
 // 新增用户
 // @Router    /api/v1/users [POST]
 func (a *userApi) Save(c *gin.Context) {
-	var d model.SysUser
+	var d dto.UserForm
 	err := c.ShouldBindJSON(d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
@@ -68,7 +69,7 @@ func (a *userApi) Save(c *gin.Context) {
 // 修改用户
 // @Router    /api/v1/users/:id [PUT]
 func (a *userApi) Update(c *gin.Context) {
-	var d model.SysUser
+	var d dto.UserForm
 	err := c.ShouldBindJSON(d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
@@ -117,4 +118,21 @@ func (a *userApi) UpdatePassword(c *gin.Context) {
 		return
 	}
 	vo.Success(c)
+}
+
+// 获取登录用户信息
+// @Router    /api/v1/users/me [GET]
+func (a *userApi) GetUserLoginInfo(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Keys["id"].(string), 10, 64)
+	common.LOG.Debug("从jwt中获取到用户", zap.Int64("id", id))
+	if err != nil {
+		vo.FailMsg(err.Error(), c)
+		return
+	}
+	user, err := service.UserService.GetUserInfo(id)
+	if err != nil {
+		vo.FailMsg(err.Error(), c)
+		return
+	}
+	vo.SuccessData(user, c)
 }
