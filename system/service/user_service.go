@@ -157,9 +157,8 @@ func (service *userService) GetUserInfo(id int64) (user *vo.UserAuthInfo, err er
 		return
 	}
 	user.Roles = roles
-	menuService := MenuService{}
 	if len(user.Roles) > 0 {
-		user.Perms = menuService.ListRolePerms(user.Roles)
+		user.Perms = MenuService.ListRolePerms(user.Roles)
 	}
 	roleService := roleService{}
 	user.DataScope, err = roleService.GetMaximumDataScope(user.Roles)

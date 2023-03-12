@@ -15,10 +15,12 @@ import (
 )
 
 // 菜单业务接口
-type MenuService struct{}
+type menuService struct{}
+
+var MenuService = new(menuService)
 
 // 获取菜单表格列表
-func (service *MenuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu, err error) {
+func (service *menuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu, err error) {
 	common.LOG.Debug("查询菜单表格参数", zap.Int("PageNum", pageReq.PageNum), zap.Int("PageSize", pageReq.PageSize), zap.String("Keywords", pageReq.Keywords))
 	tx := common.DB.Model(&model.SysMenu{})
 	if pageReq.Keywords != "" {
@@ -51,8 +53,33 @@ func (service *MenuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu
 	return list, err
 }
 
+// 根据id获取菜单详情
+func (service *menuService) GetById(id int64) (s_vo.SysMenu, error) {
+	var m model.SysMenu
+	err := common.DB.First(&m, id).Error
+	if err != nil {
+		return s_vo.SysMenu{}, err
+	}
+	vo := s_vo.SysMenu{
+		Id:          m.Id,
+		Name:        m.Name,
+		ParentId:    m.ParentId,
+		Type:        m.Type.String(),
+		Path:        m.Path,
+		Component:   m.Component,
+		Perm:        m.Perm,
+		Visible:     m.Visible,
+		Sort:        m.Sort,
+		Icon:        m.Icon,
+		RedirectUrl: m.RedirectUrl,
+		CreateTime:  m.CreateTime,
+		UpdateTime:  m.UpdateTime,
+	}
+	return vo, nil
+}
+
 // 递归生成部门层级列表
-func (service *MenuService) recur(parentId int64, menus []model.SysMenu) (vos []s_vo.Menu) {
+func (service *menuService) recur(parentId int64, menus []model.SysMenu) (vos []s_vo.Menu) {
 	for _, v := range menus {
 		if v.ParentId != parentId {
 			continue
@@ -66,7 +93,7 @@ func (service *MenuService) recur(parentId int64, menus []model.SysMenu) (vos []
 }
 
 // 获取菜单下拉列表
-func (service *MenuService) ListOptions() (list []vo.TreeOption) {
+func (service *menuService) ListOptions() (list []vo.TreeOption) {
 	var menus []model.SysMenu
 	err := common.DB.Model(&model.SysMenu{}).Order("`sort` ASC").Find(&menus).Error
 	if err != nil {
@@ -77,7 +104,7 @@ func (service *MenuService) ListOptions() (list []vo.TreeOption) {
 }
 
 // 递归生成菜单下拉层级列表
-func (service *MenuService) recurTreeOptions(parentId int64, menus []model.SysMenu) (options []vo.TreeOption) {
+func (service *menuService) recurTreeOptions(parentId int64, menus []model.SysMenu) (options []vo.TreeOption) {
 	if len(menus) <= 0 {
 		return
 	}
@@ -92,7 +119,7 @@ func (service *MenuService) recurTreeOptions(parentId int64, menus []model.SysMe
 }
 
 // 保存菜单
-func (service *MenuService) Save(data model.SysMenu) (err error) {
+func (service *menuService) Save(data *model.SysMenu) (err error) {
 	switch data.Type {
 	case 2:
 		//目录
@@ -108,18 +135,18 @@ func (service *MenuService) Save(data model.SysMenu) (err error) {
 	if data.Id > 0 {
 		err = common.DB.Model(&data).Updates(&data).Error
 	} else {
-		err = common.DB.Model(&data).Save(&data).Error
+		err = common.DB.Model(&data).Create(&data).Error
 	}
 	return
 }
 
 // 批量刪除
-func (service *MenuService) DeleteByIds(ids []int64) error {
-	return common.DB.Model(&model.SysMenu{}).Delete(ids).Error
+func (service *menuService) DeleteByIds(ids []int64) error {
+	return common.DB.Where("id in ?", ids).Delete(&model.SysMenu{}).Error
 }
 
 // 路由列表
-func (service *MenuService) ListRoutes() []s_vo.Route {
+func (service *menuService) ListRoutes() []s_vo.Route {
 	//TODO 增加缓存
 	var menus []model.SysMenu
 	err := common.DB.Model(&model.SysMenu{}).Preload("SysRoles").Find(&menus).Error
@@ -132,7 +159,7 @@ func (service *MenuService) ListRoutes() []s_vo.Route {
 			Id:          v.Id,
 			ParentId:    v.ParentId,
 			Name:        v.Name,
-			Type:        v.Type,
+			Type:        v.Type.String(),
 			Path:        v.Path,
 			Component:   v.Component,
 			Perm:        v.Perm,
@@ -154,7 +181,7 @@ func (service *MenuService) ListRoutes() []s_vo.Route {
 }
 
 // 递归生成菜单路由层级列表
-func (service *MenuService) recurRoutes(parentId int64, menus []model.Route) (list []s_vo.Route) {
+func (service *menuService) recurRoutes(parentId int64, menus []model.Route) (list []s_vo.Route) {
 	if len(menus) <= 0 {
 		return
 	}
@@ -174,7 +201,7 @@ func (service *MenuService) recurRoutes(parentId int64, menus []model.Route) (li
 				KeepAlive: true,
 			},
 		}
-		if v.Type == 1 {
+		if v.Type == model.MENU.String() {
 			vo.Name = v.Path
 		}
 		children := service.recurRoutes(v.Id, menus)
@@ -194,14 +221,14 @@ func (service *MenuService) recurRoutes(parentId int64, menus []model.Route) (li
 }
 
 // 获取菜单资源树形列表
-func (service *MenuService) ListResources() []vo.TreeOption {
+func (service *menuService) ListResources() []vo.TreeOption {
 	return service.ListOptions()
 }
 
 // 修改菜单显示状态
 // @param id 菜单id
 // @param visible 是否显示(1->显示；2->隐藏)
-func (service *MenuService) UpdateVisible(id int64, visible int) bool {
+func (service *menuService) UpdateVisible(id int64, visible int) bool {
 	err := common.DB.Model(&model.SysMenu{Id: id}).Update("visible", visible).Error
 	if err != nil {
 		fmt.Println("修改失败")
@@ -210,7 +237,7 @@ func (service *MenuService) UpdateVisible(id int64, visible int) bool {
 	return true
 }
 
-func (service *MenuService) ListRolePerms(roles []string) (perms []string) {
+func (service *menuService) ListRolePerms(roles []string) (perms []string) {
 	sql := `
 	SELECT
             DISTINCT t1.perm

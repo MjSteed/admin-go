@@ -28,40 +28,37 @@ func (rt *DictItemRouter) InitDictTypeRouter(Router *gin.RouterGroup) {
 }
 
 func (rt *DictItemRouter) InitDeptRouter(Router *gin.RouterGroup) {
-	api := api.DeptApi{}
 	r := Router.Group("/v1/dept")
-	r.GET("", api.ListPages)
-	r.GET("/options", api.ListOptions)
-	r.GET("/:id/form", api.GetForm)
-	r.POST("", api.Save)
-	r.PUT("", api.Update)
-	r.DELETE("/:ids", api.BatchDelete)
+	r.GET("", api.DeptApi.ListPages)
+	r.GET("/options", api.DeptApi.ListOptions)
+	r.GET("/:id/form", api.DeptApi.GetForm)
+	r.POST("", api.DeptApi.Save)
+	r.PUT("", api.DeptApi.Update)
+	r.DELETE("/:ids", api.DeptApi.BatchDelete)
 }
 
 func (rt *DictItemRouter) InitMenuRouter(Router *gin.RouterGroup) {
-	api := api.MenuApi{}
 	r := Router.Group("/v1/menus")
-	r.GET("/resources", api.ListResources)
-	r.GET("", api.List)
-	r.GET("/options", api.ListOptions)
-	r.GET("/routes", api.ListRoutes)
-	r.POST("", api.Save)
-	r.PUT("", api.Update)
-	r.DELETE("/:ids", api.BatchDelete)
+	r.GET("/resources", api.MenuApi.ListResources)
+	r.GET("", api.MenuApi.List)
+	r.GET("/options", api.MenuApi.ListOptions)
+	r.GET("/routes", api.MenuApi.ListRoutes)
+	r.POST("", api.MenuApi.Save)
+	r.PUT("", api.MenuApi.Update)
+	r.DELETE("/:ids", api.MenuApi.BatchDelete)
 }
 
 func (rt *DictItemRouter) InitRolesRouter(Router *gin.RouterGroup) {
-	api := api.RoleApi{}
 	r := Router.Group("/v1/roles")
-	r.GET("/pages", api.List)
-	r.GET("/options", api.ListOptions)
-	r.GET("/:id", api.GetForm)
-	r.POST("", api.Save)
-	r.PUT("", api.Update)
-	r.DELETE("/:ids", api.BatchDelete)
-	r.PUT("/:id/status", api.UpdateRoleStatus)
-	r.GET("/:id/menuIds", api.GetRoleMenuIds)
-	r.PUT("/:id/menus", api.UpdateRoleMenus)
+	r.GET("/pages", api.RoleApi.List)
+	r.GET("/options", api.RoleApi.ListOptions)
+	r.GET("/:id", api.RoleApi.GetForm)
+	r.POST("", api.RoleApi.Save)
+	r.PUT("", api.RoleApi.Update)
+	r.DELETE("/:ids", api.RoleApi.BatchDelete)
+	r.PUT("/:id/status", api.RoleApi.UpdateRoleStatus)
+	r.GET("/:id/menuIds", api.RoleApi.GetRoleMenuIds)
+	r.PUT("/:id/menus", api.RoleApi.UpdateRoleMenus)
 }
 
 func (rt *DictItemRouter) InitUserRouter(Router *gin.RouterGroup) {
