@@ -7,14 +7,14 @@ import (
 )
 
 type Dept struct {
-	Id         int64
-	ParentId   int64
-	Name       string
-	Sort       int
-	Status     int
-	Children   []Dept
-	CreateTime time.Time
-	UpdateTime time.Time
+	Id         int64     `json:"id"`
+	ParentId   int64     `json:"parentId"`
+	Name       string    `json:"name"`
+	Sort       int       `json:"sort"`
+	Status     int       `json:"status"`
+	Children   []Dept    `json:"children"`
+	CreateTime time.Time `json:"createTime"`
+	UpdateTime time.Time `json:"updateTime"`
 }
 
 func (dept *Dept) Format(d model.SysDept) (v Dept) {

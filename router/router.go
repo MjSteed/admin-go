@@ -38,13 +38,12 @@ func Routers() *gin.Engine {
 		//路由冲突
 		// r.GET("/:typeCode/items", api.ListDictItemsByTypeCode)
 
-		deptApi := api.DeptApi{}
-		router.GET("/dept", deptApi.ListPages)
-		router.GET("/dept/options", deptApi.ListOptions)
-		router.GET("/dept/:id/form", deptApi.GetForm)
-		router.POST("/dept", deptApi.Save)
-		router.PUT("/dept", deptApi.Update)
-		router.DELETE("/dept/:ids", deptApi.BatchDelete)
+		router.GET("/dept", api.DeptApi.ListPages)
+		router.GET("/dept/options", api.DeptApi.ListOptions)
+		router.GET("/dept/:id/form", api.DeptApi.GetForm)
+		router.POST("/dept", api.DeptApi.Save)
+		router.PUT("/dept/:id", api.DeptApi.Update)
+		router.DELETE("/dept/:ids", api.DeptApi.BatchDelete)
 
 		menuApi := api.MenuApi{}
 		router.GET("/menus/resources", menuApi.ListResources)
