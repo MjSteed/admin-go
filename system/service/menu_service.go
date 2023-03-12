@@ -121,31 +121,36 @@ func (service *MenuService) DeleteByIds(ids []int64) error {
 // 路由列表
 func (service *MenuService) ListRoutes() []s_vo.Route {
 	//TODO 增加缓存
-	sql := `SELECT
-			t1.id,
-			t1.name,
-			t1.parent_id,
-           	t1.path,
-           	t1.component,
-           	t1.icon,
-			t1.sort,
-			t1.visible,
-			t1.redirect_url,
-			t1.type,
-			t3.code
-		FROM
-			sys_menu t1
-				LEFT JOIN sys_role_menu t2 ON t1.id = t2.menu_id
-				LEFT JOIN sys_role t3 ON t2.role_id = t3.id
-		WHERE
-			t1.type != ?
-		ORDER BY t1.sort asc`
-	var menus []model.Route
-	err := common.DB.Raw(sql, 4).Scan(&menus).Error
+	var menus []model.SysMenu
+	err := common.DB.Model(&model.SysMenu{}).Preload("SysRoles").Find(&menus).Error
 	if err != nil {
 		return nil
 	}
-	return service.recurRoutes(ROOT_NODE_ID, menus)
+	var routes []model.Route
+	for _, v := range menus {
+		r := model.Route{
+			Id:          v.Id,
+			ParentId:    v.ParentId,
+			Name:        v.Name,
+			Type:        v.Type,
+			Path:        v.Path,
+			Component:   v.Component,
+			Perm:        v.Perm,
+			Visible:     v.Visible,
+			Sort:        v.Sort,
+			Icon:        v.Icon,
+			RedirectUrl: v.RedirectUrl,
+		}
+		if len(v.SysRoles) > 0 {
+			var roles []string
+			for _, sr := range v.SysRoles {
+				roles = append(roles, sr.Code)
+			}
+			r.Roles = roles
+		}
+		routes = append(routes, r)
+	}
+	return service.recurRoutes(ROOT_NODE_ID, routes)
 }
 
 // 递归生成菜单路由层级列表
