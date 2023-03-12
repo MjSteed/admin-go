@@ -24,19 +24,17 @@ func Routers() *gin.Engine {
 	router := r.Group("/api/v1").Use(middleware.JWTAuth())
 	// sr := system.DictItemRouter{}
 	{
-		itemApi := api.DictItemApi{}
-		router.GET("/dict/items/pages", itemApi.ListPages)
-		router.GET("/dict/items/:id/form", itemApi.GetForm)
-		router.POST("/dict/items", itemApi.Save)
-		router.PUT("/dict/items", itemApi.Update)
-		router.DELETE("/dict/items/:ids", itemApi.BatchDelete)
+		router.GET("/dict/items/pages", api.DictItemApi.ListPages)
+		router.GET("/dict/items/:id/form", api.DictItemApi.GetForm)
+		router.POST("/dict/items", api.DictItemApi.Save)
+		router.PUT("/dict/items/:id", api.DictItemApi.Update)
+		router.DELETE("/dict/items/:ids", api.DictItemApi.BatchDelete)
 
-		typeApi := api.DictTypeApi{}
-		router.GET("/dict/types/pages", typeApi.ListPages)
-		router.GET("/dict/types/:id/form", typeApi.GetForm)
-		router.POST("/dict/types", typeApi.Save)
-		router.PUT("/dict/types", typeApi.Update)
-		router.DELETE("/dict/types/:ids", typeApi.BatchDelete)
+		router.GET("/dict/types/pages", api.DictTypeApi.ListPages)
+		router.GET("/dict/types/:id/form", api.DictTypeApi.GetForm)
+		router.POST("/dict/types", api.DictTypeApi.Save)
+		router.PUT("/dict/types/:id", api.DictTypeApi.Update)
+		router.DELETE("/dict/types/:ids", api.DictTypeApi.BatchDelete)
 		//路由冲突
 		// r.GET("/:typeCode/items", api.ListDictItemsByTypeCode)
 

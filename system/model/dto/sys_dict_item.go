@@ -1,7 +1,7 @@
 package dto
 
 type DictItemPageReq struct {
-	Keywords string `form:"keywords"`
+	Name     string `form:"name"`
 	TypeCode string `form:"typeCode"`
 	PageNum  int    `form:"pageNum"`
 	PageSize int    `form:"pageSize"`

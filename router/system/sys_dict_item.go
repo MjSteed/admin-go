@@ -8,23 +8,21 @@ import (
 type DictItemRouter struct{}
 
 func (rt *DictItemRouter) InitDictItemRouter(Router *gin.RouterGroup) {
-	api := api.DictItemApi{}
 	r := Router.Group("/v1/dict/items")
-	r.GET("/pages", api.ListPages)
-	r.GET("/:id/form", api.GetForm)
-	r.POST("", api.Save)
-	r.PUT("", api.Update)
-	r.DELETE("/:ids", api.BatchDelete)
+	r.GET("/pages", api.DictItemApi.ListPages)
+	r.GET("/:id/form", api.DictItemApi.GetForm)
+	r.POST("", api.DictItemApi.Save)
+	r.PUT("", api.DictItemApi.Update)
+	r.DELETE("/:ids", api.DictItemApi.BatchDelete)
 }
 
 func (rt *DictItemRouter) InitDictTypeRouter(Router *gin.RouterGroup) {
-	api := api.DictTypeApi{}
 	r := Router.Group("/v1/dict/types")
-	r.GET("/pages", api.ListPages)
-	r.GET("/:id/form", api.GetForm)
-	r.POST("", api.Save)
-	r.PUT("", api.Update)
-	r.DELETE("/:ids", api.BatchDelete)
+	r.GET("/pages", api.DictTypeApi.ListPages)
+	r.GET("/:id/form", api.DictTypeApi.GetForm)
+	r.POST("", api.DictTypeApi.Save)
+	r.PUT("", api.DictTypeApi.Update)
+	r.DELETE("/:ids", api.DictTypeApi.BatchDelete)
 	//路由冲突
 	// r.GET("/:typeCode/items", api.ListDictItemsByTypeCode)
 }

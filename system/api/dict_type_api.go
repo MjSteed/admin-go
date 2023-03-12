@@ -11,19 +11,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type DictTypeApi struct{}
+type dictTypeApi struct{}
+
+var DictTypeApi = new(dictTypeApi)
 
 // 字典类型分页列表
 // @Router    /api/v1/dict/types/pages [get]
-func (a DictTypeApi) ListPages(c *gin.Context) {
+func (a *dictTypeApi) ListPages(c *gin.Context) {
 	var pageParam dto.DictTypePageReq
 	err := c.ShouldBindQuery(&pageParam)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.DictTypeService{}
-	list, total, err := service.ListDictTypePages(pageParam)
+	list, total, err := service.DictTypeService.ListDictTypePages(pageParam)
 	if err != nil {
 		vo.FailMsg("查询失败", c)
 		return
@@ -33,14 +34,13 @@ func (a DictTypeApi) ListPages(c *gin.Context) {
 
 // 字典数据表单数据
 // @Router    /api/v1/dict/types/{id}/form [get]
-func (a DictTypeApi) GetForm(c *gin.Context) {
+func (a *dictTypeApi) GetForm(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.DictTypeService{}
-	dictItem, err := service.GetDictType(id)
+	dictItem, err := service.DictTypeService.GetDictType(id)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -50,15 +50,14 @@ func (a DictTypeApi) GetForm(c *gin.Context) {
 
 // 新增字典数据
 // @Router    /api/v1/dict/types [post]
-func (a DictTypeApi) Save(c *gin.Context) {
+func (a *dictTypeApi) Save(c *gin.Context) {
 	var d model.SysDictType
-	err := c.ShouldBindJSON(d)
+	err := c.ShouldBindJSON(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.DictTypeService{}
-	err = service.SaveDictType(d)
+	err = service.DictTypeService.SaveDictType(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -68,15 +67,14 @@ func (a DictTypeApi) Save(c *gin.Context) {
 
 // 修改字典数据
 // @Router    /api/v1/dict/types [put]
-func (a DictTypeApi) Update(c *gin.Context) {
+func (a *dictTypeApi) Update(c *gin.Context) {
 	var d model.SysDictType
-	err := c.ShouldBindJSON(d)
+	err := c.ShouldBindJSON(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	service := service.DictTypeService{}
-	err = service.UpdateDictType(d)
+	err = service.DictTypeService.UpdateDictType(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -86,7 +84,7 @@ func (a DictTypeApi) Update(c *gin.Context) {
 
 // 删除字典
 // @Router    /api/v1/dict/types/{ids} [delete]
-func (a DictTypeApi) BatchDelete(c *gin.Context) {
+func (a *dictTypeApi) BatchDelete(c *gin.Context) {
 	idsStr := strings.Split(c.Param("ids"), ",")
 	ids := make([]int64, len(idsStr))
 	for _, v := range idsStr {
@@ -96,8 +94,7 @@ func (a DictTypeApi) BatchDelete(c *gin.Context) {
 		}
 		ids = append(ids, id)
 	}
-	service := service.DictTypeService{}
-	err := service.DeleteDictTypes(ids)
+	err := service.DictTypeService.DeleteDictTypes(ids)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -107,10 +104,9 @@ func (a DictTypeApi) BatchDelete(c *gin.Context) {
 
 // 删除字典
 // @Router    /api/v1/dict/types/{typeCode}/items [get]
-func (a DictTypeApi) ListDictItemsByTypeCode(c *gin.Context) {
+func (a *dictTypeApi) ListDictItemsByTypeCode(c *gin.Context) {
 	typeCode := c.Param("typeCode")
-	service := service.DictTypeService{}
-	dicts, err := service.ListDictItemsByTypeCode(typeCode)
+	dicts, err := service.DictTypeService.ListDictItemsByTypeCode(typeCode)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
