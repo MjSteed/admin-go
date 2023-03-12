@@ -11,11 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type RoleApi struct{}
+type roleApi struct{}
+
+var RoleApi = new(roleApi)
 
 // 角色分页列表
 // @Router    /api/v1/roles/pages [get]
-func (a RoleApi) List(c *gin.Context) {
+func (a *roleApi) List(c *gin.Context) {
 	var pageParam dto.DeptPageReq
 	err := c.ShouldBindQuery(&pageParam)
 	if err != nil {
@@ -32,13 +34,13 @@ func (a RoleApi) List(c *gin.Context) {
 
 // 角色下拉列表
 // @Router    /api/v1/roles/options [get]
-func (a RoleApi) ListOptions(c *gin.Context) {
+func (a *roleApi) ListOptions(c *gin.Context) {
 	vo.SuccessData(service.RoleService.ListOptions(), c)
 }
 
 // 角色详情
 // @Router    /api/v1/roles/:id [get]
-func (a RoleApi) GetForm(c *gin.Context) {
+func (a *roleApi) GetForm(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
@@ -54,14 +56,14 @@ func (a RoleApi) GetForm(c *gin.Context) {
 
 // 新增角色
 // @Router    /api/v1/roles [post]
-func (a RoleApi) Save(c *gin.Context) {
+func (a *roleApi) Save(c *gin.Context) {
 	var d model.SysRole
-	err := c.ShouldBindJSON(d)
+	err := c.ShouldBindJSON(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	err = service.RoleService.Save(d)
+	err = service.RoleService.Save(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -69,16 +71,16 @@ func (a RoleApi) Save(c *gin.Context) {
 	vo.Success(c)
 }
 
-// 修改菜单
+// 修改角色
 // @Router    /api/v1/roles [put]
-func (a RoleApi) Update(c *gin.Context) {
+func (a *roleApi) Update(c *gin.Context) {
 	var d model.SysRole
-	err := c.ShouldBindJSON(d)
+	err := c.ShouldBindJSON(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	err = service.RoleService.Save(d)
+	err = service.RoleService.Save(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -88,7 +90,7 @@ func (a RoleApi) Update(c *gin.Context) {
 
 // 删除角色
 // @Router    /api/v1/roles/:ids [delete]
-func (a RoleApi) BatchDelete(c *gin.Context) {
+func (a *roleApi) BatchDelete(c *gin.Context) {
 	idsStr := strings.Split(c.Param("ids"), ",")
 	ids := make([]int64, len(idsStr))
 	for _, v := range idsStr {
@@ -108,7 +110,7 @@ func (a RoleApi) BatchDelete(c *gin.Context) {
 
 // 修改角色状态
 // @Router    /api/v1/:id/status [PUT]
-func (a RoleApi) UpdateRoleStatus(c *gin.Context) {
+func (a *roleApi) UpdateRoleStatus(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
@@ -129,7 +131,7 @@ func (a RoleApi) UpdateRoleStatus(c *gin.Context) {
 
 // 获取角色的菜单ID集合
 // @Router    /api/v1/:id/menuIds [GET]
-func (a RoleApi) GetRoleMenuIds(c *gin.Context) {
+func (a *roleApi) GetRoleMenuIds(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
@@ -141,7 +143,7 @@ func (a RoleApi) GetRoleMenuIds(c *gin.Context) {
 
 // 分配角色的资源权限
 // @Router    /api/v1/:id/menus [PUT]
-func (a RoleApi) UpdateRoleMenus(c *gin.Context) {
+func (a *roleApi) UpdateRoleMenus(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)

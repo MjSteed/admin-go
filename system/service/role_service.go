@@ -58,13 +58,13 @@ func (service *roleService) GetById(id int64) (r model.SysRole) {
 }
 
 // 新增或更新
-func (service *roleService) Save(data model.SysRole) (err error) {
+func (service *roleService) Save(data *model.SysRole) (err error) {
 	tx := common.DB.Model(&data)
 	if data.Id > 0 {
 		tx = tx.Where("id != ?", data.Id)
 	}
 	var c int64
-	err = tx.Where("`code` = ?", data.Code).Or("`name` = ?", data.Name).Count(&c).Error
+	err = tx.Debug().Where(common.DB.Where("`code` = ?", data.Code).Or("`name` = ?", data.Name)).Count(&c).Error
 	if err != nil {
 		common.LOG.Error("查询角色是否重复失败", zap.Error(err))
 		return
@@ -73,7 +73,7 @@ func (service *roleService) Save(data model.SysRole) (err error) {
 		err = errors.New("角色名称或角色编码重复，请检查！")
 		return
 	}
-	err = common.DB.Model(&data).Save(&data).Error
+	err = common.DB.Save(&data).Error
 	return
 }
 
@@ -110,19 +110,25 @@ func (service *roleService) GetRoleMenuIds(id int64) (menus []int64) {
 				sys_role_menu rm
 				INNER JOIN sys_menu m ON rm.menu_id = m.id
 			WHERE rm.role_id = ?`
-	common.DB.Raw(sql, id).Scan(&menus)
+	err := common.DB.Raw(sql, id).Scan(&menus).Error
+	if err != nil {
+		common.LOG.Error("查询菜单id报错", zap.Error(err))
+	}
+	if menus == nil {
+		menus = make([]int64, 0)
+	}
 	return
 }
 
 // 修改角色的资源权限
 func (service *roleService) UpdateRoleMenus(id int64, menuIds []int64) error {
 	return common.DB.Transaction(func(tx *gorm.DB) error {
-		err := tx.Where("`role_id` = ?", id).Delete(&model.SysUserRole{}).Error
+		err := tx.Debug().Where("`role_id` = ?", id).Delete(&model.SysRoleMenu{}).Error
 		if err != nil {
 			common.LOG.Warn("删除sys_user_role表失败", zap.Error(err))
 			return err
 		}
-		roleMenus := make([]model.SysRoleMenu, len(menuIds))
+		var roleMenus []model.SysRoleMenu
 		for _, v := range menuIds {
 			roleMenus = append(roleMenus, model.SysRoleMenu{RoleId: id, MenuId: v})
 		}
