@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/MjSteed/vue3-element-admin-go/common"
 	"github.com/MjSteed/vue3-element-admin-go/router"
 )
 
@@ -17,6 +18,7 @@ import (
 // @name                        x-token
 // @BasePath                    /
 func main() {
+	common.Cache = common.InitializeRedis()
 	r := router.Routers()
 	r.Run(":9999")
 }
