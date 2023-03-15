@@ -9,22 +9,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var Cache *redis.Client
-
-func InitializeRedis() *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr:     "127.0.0.1:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-	_, err := client.Ping(context.Background()).Result()
-	if err != nil {
-		LOG.Error("Redis connect ping failed, err:", zap.Any("err", err))
-		return nil
-	}
-	return client
-}
-
 // 从缓存获取数据转化为需要的类型
 func CacheGet(key string, data interface{}) error {
 	str, err := Cache.Get(context.Background(), key).Result()

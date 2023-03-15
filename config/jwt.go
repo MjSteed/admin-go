@@ -1,9 +1,7 @@
 package config
 
-type jwt struct {
-	Secret string
-	Issuer string
-	Ttl    int
+type Jwt struct {
+	Secret string `mapstructure:"secret" json:"secret" yaml:"secret"`
+	Issuer string `mapstructure:"issuer" json:"issuer" yaml:"issuer"`
+	Ttl    int    `mapstructure:"ttl" json:"ttl" yaml:"ttl"` //秒
 }
-
-var Jwt = jwt{Secret: "12321114rdst43rqsa", Issuer: "test", Ttl: 1100000}

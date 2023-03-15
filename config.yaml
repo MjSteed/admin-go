@@ -1,0 +1,35 @@
+log:
+  level: 'debug'
+  root_dir: './'
+  filename: 'app.log'
+  format: ''
+  show_line: false
+  max_backups: 3
+  max_size: 500
+  max_age: 28
+  compress: true
+
+database:
+  driver: 'mysql'
+  host: '127.0.0.1'
+  port: 3306
+  database: 'test'
+  username: 'root'
+  password: '123456'
+  charset: 'utf8mb4'
+  max_idle_conns: 10
+  max_open_conns: 100
+  log_mode: 'info'
+  enable_file_log_writer: true
+  log_filename: 'sql.log'
+
+jwt:
+  secret: '3Bde3BGEbYqtTxEUzW3ry8jKFjfaPH34fRmTmqE7MDr05Lwjew4ruRKrrkb44TJ4s'
+  ttl: 43200
+  issuer: 'web'
+
+redis:
+  host: '127.0.0.1'
+  port: 6379
+  db: 0
+  password: ''

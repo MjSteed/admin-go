@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/MjSteed/vue3-element-admin-go/bootstrap"
 	"github.com/MjSteed/vue3-element-admin-go/common"
 	"github.com/MjSteed/vue3-element-admin-go/router"
 )
@@ -18,7 +19,10 @@ import (
 // @name                        x-token
 // @BasePath                    /
 func main() {
-	common.Cache = common.InitializeRedis()
+	bootstrap.InitializeConfig()
+	common.LOG = bootstrap.InitLogger()
+	common.Cache = bootstrap.InitializeRedis()
+	common.DB = bootstrap.InitDatabase()
 	r := router.Routers()
 	r.Run(":9999")
 }
