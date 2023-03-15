@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	"github.com/MjSteed/vue3-element-admin-go/common"
 	"github.com/MjSteed/vue3-element-admin-go/middleware"
 	"github.com/MjSteed/vue3-element-admin-go/system/api"
 	"github.com/gin-gonic/gin"
@@ -11,8 +12,8 @@ import (
 // 初始化总路由
 
 func Routers() *gin.Engine {
-	r := gin.Default()
-
+	r := gin.New()
+	r.Use(middleware.GinLogger(common.LOG), middleware.GinRecovery(common.LOG, true))
 	pg := r.Group("test")
 	{
 		// 健康监测
