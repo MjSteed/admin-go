@@ -171,7 +171,7 @@ func (service *menuService) ListRoutes() (vos []s_vo.Route) {
 	}
 	common.LOG.Debug("缓存获取失败，从数据库获取路由")
 	var menus []model.SysMenu
-	err = common.DB.Model(&model.SysMenu{}).Preload("SysRoles").Find(&menus).Error
+	err = common.DB.Model(&model.SysMenu{}).Where("type != ?", model.BUTTON).Preload("SysRoles").Find(&menus).Error
 	if err != nil {
 		return nil
 	}
