@@ -1,9 +1,10 @@
 package bootstrap
 
 import (
-	"time"
+	"os"
 
 	"github.com/MjSteed/vue3-element-admin-go/common"
+	"github.com/MjSteed/vue3-element-admin-go/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -15,14 +16,12 @@ func InitLogger() *zap.Logger {
 	switch common.Config.Logger.Level {
 	case "debug":
 		level = zap.DebugLevel
-		options = append(options, zap.AddStacktrace(level))
 	case "info":
 		level = zap.InfoLevel
 	case "warn":
 		level = zap.WarnLevel
 	case "error":
 		level = zap.ErrorLevel
-		options = append(options, zap.AddStacktrace(level))
 	case "dpanic":
 		level = zap.DPanicLevel
 	case "panic":
@@ -45,12 +44,8 @@ func getZapCore(level zapcore.Level) zapcore.Core {
 
 	// 调整编码器默认配置
 	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = func(time time.Time, encoder zapcore.PrimitiveArrayEncoder) {
-		encoder.AppendString(time.Format("[" + "2023-03-15 20:42:05.000" + "]"))
-	}
-	encoderConfig.EncodeLevel = func(l zapcore.Level, encoder zapcore.PrimitiveArrayEncoder) {
-		encoder.AppendString(l.String())
-	}
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 
 	// 设置编码器
 	if common.Config.Logger.Format == "json" {
@@ -59,11 +54,13 @@ func getZapCore(level zapcore.Level) zapcore.Core {
 		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 	}
 
-	return zapcore.NewCore(encoder, getLogWriter(), level)
+	//同时输出至控制台和文件
+	return zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(os.Stdout, getLogWriter()), level)
 }
 
 // 使用 lumberjack 作为日志写入器
 func getLogWriter() zapcore.WriteSyncer {
+	utils.CreateDir(common.Config.Logger.RootDir)
 	file := &lumberjack.Logger{
 		Filename:   common.Config.Logger.RootDir + "/" + common.Config.Logger.Filename,
 		MaxSize:    common.Config.Logger.MaxSize,
@@ -71,6 +68,5 @@ func getLogWriter() zapcore.WriteSyncer {
 		MaxAge:     common.Config.Logger.MaxAge,
 		Compress:   common.Config.Logger.Compress,
 	}
-
 	return zapcore.AddSync(file)
 }
