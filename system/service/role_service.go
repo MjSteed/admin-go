@@ -122,6 +122,7 @@ func (service *roleService) GetRoleMenuIds(id int64) (menus []int64) {
 
 // 修改角色的资源权限
 func (service *roleService) UpdateRoleMenus(id int64, menuIds []int64) error {
+	common.CacheDel(router_cache_key)
 	return common.DB.Transaction(func(tx *gorm.DB) error {
 		err := tx.Debug().Where("`role_id` = ?", id).Delete(&model.SysRoleMenu{}).Error
 		if err != nil {

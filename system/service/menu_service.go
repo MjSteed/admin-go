@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/MjSteed/vue3-element-admin-go/common"
 	"github.com/MjSteed/vue3-element-admin-go/common/model/vo"
@@ -18,6 +19,10 @@ import (
 type menuService struct{}
 
 var MenuService = new(menuService)
+
+const (
+	router_cache_key = "sys:routers"
+)
 
 // 获取菜单表格列表
 func (service *menuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu, err error) {
@@ -137,19 +142,36 @@ func (service *menuService) Save(data *model.SysMenu) (err error) {
 	} else {
 		err = common.DB.Model(&data).Create(&data).Error
 	}
+	if err != nil {
+		return
+	}
+	common.CacheDel(router_cache_key)
 	return
 }
 
 // 批量刪除
 func (service *menuService) DeleteByIds(ids []int64) error {
-	return common.DB.Where("id in ?", ids).Delete(&model.SysMenu{}).Error
+	err := common.DB.Where("id in ?", ids).Delete(&model.SysMenu{}).Error
+	if err != nil {
+		return err
+	}
+	common.CacheDel(router_cache_key)
+	return err
 }
 
 // 路由列表
-func (service *menuService) ListRoutes() []s_vo.Route {
-	//TODO 增加缓存
+func (service *menuService) ListRoutes() (vos []s_vo.Route) {
+	err := common.CacheGet(router_cache_key, &vos)
+	if err != nil {
+		return nil
+	}
+	if len(vos) > 0 {
+		common.LOG.Debug("路由缓存获取成功")
+		return
+	}
+	common.LOG.Debug("缓存获取失败，从数据库获取路由")
 	var menus []model.SysMenu
-	err := common.DB.Model(&model.SysMenu{}).Preload("SysRoles").Find(&menus).Error
+	err = common.DB.Model(&model.SysMenu{}).Preload("SysRoles").Find(&menus).Error
 	if err != nil {
 		return nil
 	}
@@ -177,7 +199,12 @@ func (service *menuService) ListRoutes() []s_vo.Route {
 		}
 		routes = append(routes, r)
 	}
-	return service.recurRoutes(ROOT_NODE_ID, routes)
+	vos = service.recurRoutes(ROOT_NODE_ID, routes)
+	err = common.CacheSet(router_cache_key, &vos, time.Minute*10)
+	if err != nil {
+		common.LOG.Error("设置缓存错误", zap.Error(err))
+	}
+	return
 }
 
 // 递归生成菜单路由层级列表

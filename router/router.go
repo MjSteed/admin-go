@@ -51,7 +51,7 @@ func Routers() *gin.Engine {
 		router.GET("/menus/routes", api.MenuApi.ListRoutes)
 		router.GET("/menus/:id", api.MenuApi.GetById)
 		router.POST("/menus", api.MenuApi.Save)
-		router.PUT("/menus", api.MenuApi.Update)
+		router.PUT("/menus/:id", api.MenuApi.Update)
 		router.DELETE("/menus/:ids", api.MenuApi.BatchDelete)
 
 		router.GET("/roles/pages", api.RoleApi.List)
