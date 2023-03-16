@@ -33,3 +33,14 @@ redis:
   port: 6379
   db: 0
   password: ''
+
+aws-s3:
+  bucket: test
+  region: ap-shanghai
+  endpoint: ""
+  s3-force-path-style: false
+  disable-ssl: false
+  secret-id: your-secret-id
+  secret-key: your-secret-key
+  base-url: https://test
+  path-prefix: file/
