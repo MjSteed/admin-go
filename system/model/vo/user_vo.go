@@ -23,7 +23,7 @@ type UserAuthInfo struct {
 	Password  string   `json:"password"`
 	Status    int      `json:"status"`
 	DeptId    int64    `json:"deptId"`
-	Roles     []string `json:"roles"`
-	Perms     []string `json:"perms"`
-	DataScope int      `json:"dataScope"`
+	Roles     []string `json:"roles" gorm:"-"`
+	Perms     []string `json:"perms" gorm:"-"`
+	DataScope int      `json:"dataScope" gorm:"-"`
 }
