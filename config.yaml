@@ -44,3 +44,8 @@ aws-s3:
   secret-key: your-secret-key
   base-url: https://test
   path-prefix: file/
+
+sign:
+  auth: 
+    test_ak: test_as
+  exp: 86400

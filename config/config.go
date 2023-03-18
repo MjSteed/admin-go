@@ -6,4 +6,5 @@ type ApplicationConfig struct {
 	Redis    Redis    `mapstructure:"redis" json:"redis" yaml:"redis"`
 	Database Database `mapstructure:"database" json:"database" yaml:"database"`
 	AwsS3    AwsS3    `mapstructure:"aws-s3" json:"aws-s3" yaml:"aws-s3"`
+	Sign     Sign     `mapstructure:"sign" json:"sign" yaml:"sign"`
 }
