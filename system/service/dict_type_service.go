@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/MjSteed/vue3-element-admin-go/common"
+	"github.com/MjSteed/vue3-element-admin-go/common/model/vo"
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	"go.uber.org/zap"
@@ -84,10 +85,14 @@ func (dictTypeService *dictTypeService) GetDictType(id int64) (dictType model.Sy
 
 // 获取字典类型的数据项
 // @param typeCode
-func (dictTypeService *dictTypeService) ListDictItemsByTypeCode(typeCode string) (dicts []model.SysDictItem, err error) {
-	err = common.DB.Model(&model.SysDictItem{}).Where("type_code = ?", typeCode).Find(dicts).Error
+func (dictTypeService *dictTypeService) ListDictItemsByTypeCode(typeCode string) (dicts []vo.TreeOption, err error) {
+	var list []model.SysDictItem
+	err = common.DB.Where("type_code = ?", typeCode).Find(&list).Error
 	if err != nil {
 		return
+	}
+	for _, v := range list {
+		dicts = append(dicts, vo.TreeOption{Label: v.Name, Value: v.Value})
 	}
 	return
 }
