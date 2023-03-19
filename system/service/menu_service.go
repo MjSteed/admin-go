@@ -37,7 +37,10 @@ func (service *menuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu
 		return
 	}
 	if len(menus) > 0 {
-		cacheIds := make([]int64, len(menus))
+		var cacheIds []int64
+		for _, v := range menus {
+			cacheIds = append(cacheIds, v.Id)
+		}
 		for _, v := range menus {
 			parentId := v.ParentId
 			//不在缓存ID列表的parentId是顶级节点ID，以此作为递归开始
