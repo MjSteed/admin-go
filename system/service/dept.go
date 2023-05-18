@@ -1,35 +1,35 @@
 package service
 
 import (
+	"context"
 	"strconv"
 
-	"github.com/MjSteed/vue3-element-admin-go/common"
 	"github.com/MjSteed/vue3-element-admin-go/common/model/vo"
+	"github.com/MjSteed/vue3-element-admin-go/system/dao"
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	s_vo "github.com/MjSteed/vue3-element-admin-go/system/model/vo"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
 
 // 部门业务
-type deptService struct{}
+type DeptService struct {
+	deptDao *dao.DeptDao
+	log     *zap.Logger
+}
 
-var DeptService = new(deptService)
+func NewDeptService(deptDao *dao.DeptDao, logger *zap.Logger) *DeptService {
+	return &DeptService{deptDao: deptDao, log: logger}
+}
 
 // 根节点ID
 const ROOT_NODE_ID = 0
 
-// 部门列表
-func (service *deptService) ListDepts(pageReq dto.DeptPageReq) (list []s_vo.Dept, err error) {
-	tx := common.DB.Model(&model.SysDept{})
-	if pageReq.Keywords != "" {
-		tx = tx.Where("`name` like ?", "%"+pageReq.Keywords+"%")
-	}
-	if pageReq.Status != "" {
-		tx = tx.Where("`status` = ?", pageReq.Status)
-	}
-	var depts []model.SysDept
-	err = tx.Order("`sort` ASC").Find(&depts).Error
+// ListPages 部门列表分页
+func (s *DeptService) ListPages(ctx *gin.Context, pageReq dto.DeptPageReq) (list []s_vo.Dept, err error) {
+	depts, err := s.deptDao.ListPages(ctx, &pageReq)
 	if len(depts) > 0 {
 		var cacheDeptIds []int64
 		for _, v := range depts {
@@ -41,7 +41,7 @@ func (service *deptService) ListDepts(pageReq dto.DeptPageReq) (list []s_vo.Dept
 			if slices.Contains(cacheDeptIds, parentId) {
 				continue
 			}
-			list = append(list, service.recurDepts(parentId, depts)...)
+			list = append(list, s.recur(parentId, depts)...)
 			cacheDeptIds = append(cacheDeptIds, parentId)
 		}
 	}
@@ -55,33 +55,32 @@ func (service *deptService) ListDepts(pageReq dto.DeptPageReq) (list []s_vo.Dept
 	return
 }
 
-// 递归生成部门层级列表
-func (service *deptService) recurDepts(parentId int64, depts []model.SysDept) (vos []s_vo.Dept) {
+// recurDepts 递归生成部门层级列表
+func (s *DeptService) recur(parentId int64, depts []model.SysDept) (vos []s_vo.Dept) {
 	for _, v := range depts {
 		if v.ParentId != parentId {
 			continue
 		}
 		vo := s_vo.Dept{}
 		vo = vo.Format(v)
-		vo.Children = service.recurDepts(v.Id, depts)
+		vo.Children = s.recur(v.Id, depts)
 		vos = append(vos, vo)
 	}
 	return
 }
 
-// 部门树形下拉选项
-func (service *deptService) ListDeptOptions() (list []vo.TreeOption, err error) {
-	var depts []model.SysDept
-	err = common.DB.Model(&model.SysDept{}).Where("`status` = 1").Order("`sort` ASC").Find(&depts).Error
+// Options 部门树形下拉选项
+func (s *DeptService) Options(ctx *gin.Context) (list []vo.TreeOption, err error) {
+	depts, err := s.deptDao.ListAll(ctx)
 	if err != nil {
 		return
 	}
-	list = service.recurTreeOptions(ROOT_NODE_ID, depts)
+	list = s.recurTreeOptions(ROOT_NODE_ID, depts)
 	return
 }
 
-// 递归生成部门表格层级列表
-func (service *deptService) recurTreeOptions(parentId int64, depts []model.SysDept) (options []vo.TreeOption) {
+// recurTreeOptions 递归生成部门表格层级列表
+func (s *DeptService) recurTreeOptions(parentId int64, depts []model.SysDept) (options []vo.TreeOption) {
 	if len(depts) <= 0 {
 		return
 	}
@@ -90,32 +89,31 @@ func (service *deptService) recurTreeOptions(parentId int64, depts []model.SysDe
 			continue
 		}
 		op := vo.TreeOption{Label: v.Name, Value: v.Id}
-		op.Children = service.recurTreeOptions(v.Id, depts)
+		op.Children = s.recurTreeOptions(v.Id, depts)
 		options = append(options, op)
 	}
 	return
 }
 
-// 新增部门
-func (service *deptService) SaveDept(dept *model.SysDept) (id int64, err error) {
-	dept.TreePath = service.generateTreePath(dept.ParentId)
-	err = common.DB.Create(&dept).Error
+// Create 新增部门
+func (s *DeptService) Create(ctx *gin.Context, dept *model.SysDept) (id int64, err error) {
+	dept.TreePath = s.generateTreePath(ctx, dept.ParentId)
+	dept, err = s.deptDao.Save(ctx, dept)
 	return dept.Id, err
 }
 
-// 修改部门
-func (service *deptService) UpdateDept(dept *model.SysDept) (id int64, err error) {
-	dept.TreePath = service.generateTreePath(dept.ParentId)
-	err = common.DB.Updates(&dept).Error
+// Update 修改部门
+func (s *DeptService) Update(ctx *gin.Context, dept *model.SysDept) (id int64, err error) {
+	dept.TreePath = s.generateTreePath(ctx, dept.ParentId)
+	dept, err = s.deptDao.Save(ctx, dept)
 	return dept.Id, err
 }
 
-func (service *deptService) generateTreePath(parentId int64) (path string) {
+func (s *DeptService) generateTreePath(ctx context.Context, parentId int64) (path string) {
 	if ROOT_NODE_ID == parentId {
 		path = strconv.FormatInt(parentId, 10)
 	} else {
-		parent := model.SysDept{}
-		err := common.DB.First(&parent, parentId).Error
+		parent, err := s.deptDao.FindById(ctx, parentId)
 		if err != nil {
 			return
 		}
@@ -126,14 +124,14 @@ func (service *deptService) generateTreePath(parentId int64) (path string) {
 
 // 删除部门
 // @param ids 部门id列表
-func (service *deptService) DeleteByIds(ids []int64) (err error) {
-	err = common.DB.Delete(&model.SysDept{}, ids).Error
+func (s *DeptService) DeleteByIds(ctx *gin.Context, ids []int64) (err error) {
+	err = s.deptDao.Delete(ctx, ids)
 	return
 }
 
 // 获取部门详情
 // @param id 部门id
-func (service *deptService) GetDeptForm(id int64) (dept model.SysDept, err error) {
-	err = common.DB.First(&dept, id).Error
+func (s *DeptService) GetForm(ctx *gin.Context, id int64) (dept *model.SysDept, err error) {
+	dept, err = s.deptDao.FindById(ctx, id)
 	return
 }

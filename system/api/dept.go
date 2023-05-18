@@ -11,21 +11,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type deptApi struct {
+type DeptApi struct {
+	deptSerivce *service.DeptService
 }
-
-var DeptApi = new(deptApi)
 
 // 获取部门列表
 // @Router    /api/v1/dept [get]
-func (a *deptApi) ListPages(c *gin.Context) {
+func (a *DeptApi) ListPages(c *gin.Context) {
 	var pageParam dto.DeptPageReq
 	err := c.ShouldBindQuery(&pageParam)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	list, err := service.DeptService.ListDepts(pageParam)
+	list, err := a.deptSerivce.ListPages(c, pageParam)
 	if err != nil {
 		vo.FailMsg("查询失败", c)
 		return
@@ -35,8 +34,8 @@ func (a *deptApi) ListPages(c *gin.Context) {
 
 // 获取部门下拉选项
 // @Router    /api/v1/dept/options [get]
-func (a *deptApi) ListOptions(c *gin.Context) {
-	list, err := service.DeptService.ListDeptOptions()
+func (a *DeptApi) ListOptions(c *gin.Context) {
+	list, err := a.deptSerivce.Options(c)
 	if err != nil {
 		vo.FailMsg("查询失败", c)
 		return
@@ -46,13 +45,13 @@ func (a *deptApi) ListOptions(c *gin.Context) {
 
 // 获取部门详情
 // @Router    /api/v1/dept/{id}/form [get]
-func (a *deptApi) GetForm(c *gin.Context) {
+func (a *DeptApi) GetForm(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	item, err := service.DeptService.GetDeptForm(id)
+	item, err := a.deptSerivce.GetForm(c, id)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -62,14 +61,14 @@ func (a *deptApi) GetForm(c *gin.Context) {
 
 // 新增部门
 // @Router    /api/v1/dept [post]
-func (a *deptApi) Save(c *gin.Context) {
+func (a *DeptApi) Save(c *gin.Context) {
 	var d model.SysDept
 	err := c.ShouldBindJSON(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	id, err := service.DeptService.SaveDept(&d)
+	id, err := a.deptSerivce.Create(c, &d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -79,14 +78,14 @@ func (a *deptApi) Save(c *gin.Context) {
 
 // 修改部门
 // @Router    /api/v1/dept [put]
-func (a *deptApi) Update(c *gin.Context) {
+func (a *DeptApi) Update(c *gin.Context) {
 	var d model.SysDept
 	err := c.ShouldBindJSON(&d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	id, err := service.DeptService.UpdateDept(&d)
+	id, err := a.deptSerivce.Update(c, &d)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -96,7 +95,7 @@ func (a *deptApi) Update(c *gin.Context) {
 
 // 删除部门
 // @Router    /api/v1/dept/{ids} [delete]
-func (a *deptApi) BatchDelete(c *gin.Context) {
+func (a *DeptApi) BatchDelete(c *gin.Context) {
 	idsStr := strings.Split(c.Param("ids"), ",")
 	ids := make([]int64, len(idsStr))
 	for _, v := range idsStr {
@@ -106,7 +105,7 @@ func (a *deptApi) BatchDelete(c *gin.Context) {
 		}
 		ids = append(ids, id)
 	}
-	err := service.DeptService.DeleteByIds(ids)
+	err := a.deptSerivce.DeleteByIds(c, ids)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
