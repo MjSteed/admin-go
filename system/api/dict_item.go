@@ -11,20 +11,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type dictItemApi struct{}
+// DictItemApi 字典数据路由接口
+type DictItemApi struct {
+	dictItemService *service.DictItemService
+}
 
-var DictItemApi = new(dictItemApi)
+// NewDictItemApi 实例化路由接口
+func NewDictItemApi(dictItemService *service.DictItemService) DictItemApi {
+	return DictItemApi{dictItemService: dictItemService}
+}
 
 // 字典数据分页列表
 // @Router    /api/v1/dict/items/pages [get]
-func (a *dictItemApi) ListPages(c *gin.Context) {
+func (a *DictItemApi) ListPages(c *gin.Context) {
 	var pageParam dto.DictItemPageReq
 	err := c.ShouldBindQuery(&pageParam)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	list, total, err := service.DictItemService.ListDictItemPages(pageParam)
+	list, total, err := a.dictItemService.ListPages(c, pageParam)
 	if err != nil {
 		vo.FailMsg("查询失败", c)
 		return
@@ -34,13 +40,13 @@ func (a *dictItemApi) ListPages(c *gin.Context) {
 
 // 字典数据表单数据
 // @Router    /api/v1/dict/items/{id}/form [get]
-func (a *dictItemApi) GetForm(c *gin.Context) {
+func (a *DictItemApi) GetForm(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	dictItem, err := service.DictItemService.GetDictItem(id)
+	dictItem, err := a.dictItemService.GetById(c, id)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -50,14 +56,14 @@ func (a *dictItemApi) GetForm(c *gin.Context) {
 
 // 新增字典数据
 // @Router    /api/v1/dict/items [post]
-func (a *dictItemApi) Save(c *gin.Context) {
+func (a *DictItemApi) Save(c *gin.Context) {
 	var dictItem model.SysDictItem
 	err := c.ShouldBindJSON(&dictItem)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	err = service.DictItemService.SaveDictItem(&dictItem)
+	err = a.dictItemService.Create(c, &dictItem)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -67,14 +73,14 @@ func (a *dictItemApi) Save(c *gin.Context) {
 
 // 修改字典数据
 // @Router    /api/v1/dict/items [put]
-func (a *dictItemApi) Update(c *gin.Context) {
+func (a *DictItemApi) Update(c *gin.Context) {
 	var dictItem model.SysDictItem
 	err := c.ShouldBindJSON(&dictItem)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	err = service.DictItemService.UpdateDictItem(&dictItem)
+	err = a.dictItemService.Update(c, &dictItem)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -84,7 +90,7 @@ func (a *dictItemApi) Update(c *gin.Context) {
 
 // 删除字典
 // @Router    /api/v1/dict/items/{ids} [delete]
-func (a *dictItemApi) BatchDelete(c *gin.Context) {
+func (a *DictItemApi) BatchDelete(c *gin.Context) {
 	idsStr := strings.Split(c.Param("ids"), ",")
 	ids := make([]int64, len(idsStr))
 	for _, v := range idsStr {
@@ -94,7 +100,7 @@ func (a *dictItemApi) BatchDelete(c *gin.Context) {
 		}
 		ids = append(ids, id)
 	}
-	err := service.DictItemService.DeleteDictItems(ids)
+	err := a.dictItemService.Delete(c, ids)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return

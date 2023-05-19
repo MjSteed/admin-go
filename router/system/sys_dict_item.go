@@ -5,18 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type DictItemRouter struct{}
+type dictItemRouter struct{}
 
-func (rt *DictItemRouter) InitDictItemRouter(Router *gin.RouterGroup) {
-	r := Router.Group("/v1/dict/items")
-	r.GET("/pages", api.DictItemApi.ListPages)
-	r.GET("/:id/form", api.DictItemApi.GetForm)
-	r.POST("", api.DictItemApi.Save)
-	r.PUT("", api.DictItemApi.Update)
-	r.DELETE("/:ids", api.DictItemApi.BatchDelete)
-}
-
-func (rt *DictItemRouter) InitDictTypeRouter(Router *gin.RouterGroup) {
+func (rt *dictItemRouter) InitDictTypeRouter(Router *gin.RouterGroup) {
 	r := Router.Group("/v1/dict/types")
 	r.GET("/pages", api.DictTypeApi.ListPages)
 	r.GET("/:id/form", api.DictTypeApi.GetForm)
@@ -27,7 +18,7 @@ func (rt *DictItemRouter) InitDictTypeRouter(Router *gin.RouterGroup) {
 	// r.GET("/:typeCode/items", api.ListDictItemsByTypeCode)
 }
 
-func (rt *DictItemRouter) InitRolesRouter(Router *gin.RouterGroup) {
+func (rt *dictItemRouter) InitRolesRouter(Router *gin.RouterGroup) {
 	r := Router.Group("/v1/roles")
 	r.GET("/pages", api.RoleApi.List)
 	r.GET("/options", api.RoleApi.ListOptions)
@@ -40,7 +31,7 @@ func (rt *DictItemRouter) InitRolesRouter(Router *gin.RouterGroup) {
 	r.PUT("/:id/menus", api.RoleApi.UpdateRoleMenus)
 }
 
-func (rt *DictItemRouter) InitUserRouter(Router *gin.RouterGroup) {
+func (rt *dictItemRouter) InitUserRouter(Router *gin.RouterGroup) {
 	r := Router.Group("/v1/users")
 	r.GET("/pages", api.UserApi.List)
 	r.GET("/:id/form", api.UserApi.GetForm)

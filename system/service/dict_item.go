@@ -1,91 +1,76 @@
 package service
 
 import (
-	"errors"
-
-	"github.com/MjSteed/vue3-element-admin-go/common"
+	"github.com/MjSteed/vue3-element-admin-go/system/dao"
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
-	"gorm.io/gorm"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-//@description: 创建字典数据
-
-type dictItemService struct {
+// DictItemService 字典数据项服务
+// @description: 创建字典数据
+type DictItemService struct {
+	log         *zap.Logger
+	dictItemDao *dao.DictItemDao
 }
 
-var DictItemService = new(dictItemService)
+// NewDictItemService 实例化
+func NewDictItemService(log *zap.Logger, dictItemDao *dao.DictItemDao) *DictItemService {
+	return &DictItemService{log: log, dictItemDao: dictItemDao}
+}
 
-func (dictItemService *dictItemService) SaveDictItem(data *model.SysDictItem) (err error) {
-	err = common.DB.Create(&data).Error
+// Create 创建字典数据项
+func (s *DictItemService) Create(ctx *gin.Context, data *model.SysDictItem) (err error) {
+	err = s.dictItemDao.Create(ctx, data)
 	return err
 }
 
-func (dictItemService *dictItemService) UpdateDictItem(sysDictItem *model.SysDictItem) (err error) {
-	err = common.DB.Updates(&sysDictItem).Error
+// Update 更新字典数据项
+func (s *DictItemService) Update(ctx *gin.Context, sysDictItem *model.SysDictItem) (err error) {
+	err = s.dictItemDao.Update(ctx, sysDictItem)
 	return err
 }
 
-// 字典类型code变化，同步修改字典项的类型code
+// UpdateOldCodeToNew 字典类型code变化，同步修改字典项的类型code
 // @param oldCode 旧code
 // @param newCode 新code
-func (dictItemService *dictItemService) UpdateOldCodeToNew(oldCode string, newCode string) (err error) {
+func (s *DictItemService) UpdateOldCodeToNew(ctx *gin.Context, oldCode string, newCode string) (err error) {
 	if oldCode == newCode {
 		return nil
 	}
-	return common.DB.Model(&model.SysDictItem{}).Where("type_code = ?", oldCode).Updates(model.SysDictItem{TypeCode: newCode}).Error
+	return s.dictItemDao.UpdateOldCodeToNew(ctx, oldCode, newCode)
 }
 
+// Delete 删除字典数据项
 // @param: ids 待删除的字典数据项ID
-func (dictItemService *dictItemService) DeleteDictItems(ids []int64) (err error) {
+func (s *DictItemService) Delete(ctx *gin.Context, ids []int64) (err error) {
 	if len(ids) <= 0 {
-		return errors.New("删除数据为空")
+		s.log.Debug("删除数据为空")
+		return nil
 	}
-	tx := common.DB.Delete(&model.SysDictItem{}, ids)
-	if err = tx.Error; err != nil {
-		err = tx.Error
-		return err
-	}
-	if tx.RowsAffected == 0 {
-		err = errors.New("删除失败")
-		return err
-	}
-	return nil
+	return s.dictItemDao.Delete(ctx, ids)
 }
 
-// @param: ids 待删除的字典数据项ID
-func (dictItemService *dictItemService) DeleteDictItemsByCode(tx *gorm.DB, codes []string) (err error) {
+// DeleteByCode 删除字典数据项
+// @param: codes 待删除的字典数据项编码
+func (s *DictItemService) DeleteByCode(ctx *gin.Context, codes []string) (err error) {
 	if len(codes) <= 0 {
-		return errors.New("删除数据为空")
+		s.log.Debug("删除数据为空")
+		return nil
 	}
-	err = tx.Where("type_code in ?", codes).Delete(&model.SysDictItem{}).Error
-	if err != nil {
-		err = tx.Error
-		return err
-	}
-	return nil
+	return s.dictItemDao.DeleteByCodes(ctx, codes)
 }
 
-// 字典数据项分页列表
-func (dictItemService *dictItemService) ListDictItemPages(pageReq dto.DictItemPageReq) (list []model.SysDictItem, total int64, err error) {
-	tx := common.DB.Model(&model.SysDictItem{})
-	if pageReq.Name != "" {
-		tx = tx.Where("`name` like ?", "%"+pageReq.Name+"%")
-	}
-	if pageReq.TypeCode != "" {
-		tx = tx.Where("`type_code` like ?", "%"+pageReq.TypeCode+"%")
-	}
-	err = tx.Count(&total).Error
-	if err != nil {
-		return
-	}
-	err = tx.Limit(pageReq.PageSize).Offset(pageReq.PageSize * (pageReq.PageNum - 1)).Find(&list).Error
+// ListPages 字典数据项分页列表
+func (s *DictItemService) ListPages(ctx *gin.Context, pageReq dto.DictItemPageReq) (list []model.SysDictItem, total int64, err error) {
+	list, total, err = s.dictItemDao.ListPages(ctx, &pageReq)
 	return list, total, err
 }
 
-// 字典数据项表单详情
+// GetById 字典数据项表单详情
 // @param id 字典数据项ID
-func (dictItemService *dictItemService) GetDictItem(id int64) (dictItem model.SysDictItem, err error) {
-	err = common.DB.Model(&dictItem).First(&dictItem, id).Error
-	return dictItem, err
+func (s *DictItemService) GetById(ctx *gin.Context, id int64) (model.SysDictItem, error) {
+	dictItem, err := s.dictItemDao.FindByID(ctx, id)
+	return *dictItem, err
 }

@@ -25,12 +25,6 @@ func Routers() *gin.Engine {
 	router := r.Group("/api/v1").Use(middleware.JWTAuth())
 	// sr := system.DictItemRouter{}
 	{
-		router.GET("/dict/items/pages", api.DictItemApi.ListPages)
-		router.GET("/dict/items/:id/form", api.DictItemApi.GetForm)
-		router.POST("/dict/items", api.DictItemApi.Save)
-		router.PUT("/dict/items/:id", api.DictItemApi.Update)
-		router.DELETE("/dict/items/:ids", api.DictItemApi.BatchDelete)
-
 		router.GET("/dict/types/pages", api.DictTypeApi.ListPages)
 		router.GET("/dict/types/:id/form", api.DictTypeApi.GetForm)
 		router.POST("/dict/types", api.DictTypeApi.Save)
