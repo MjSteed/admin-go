@@ -2,37 +2,40 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/MjSteed/vue3-element-admin-go/common"
 	"github.com/MjSteed/vue3-element-admin-go/common/model/vo"
+	"github.com/MjSteed/vue3-element-admin-go/system/dao"
 	"github.com/MjSteed/vue3-element-admin-go/system/model"
 	"github.com/MjSteed/vue3-element-admin-go/system/model/dto"
 	s_vo "github.com/MjSteed/vue3-element-admin-go/system/model/vo"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
 
-// 菜单业务接口
-type menuService struct{}
+// MenuService 菜单服务
+type MenuService struct {
+	log     *zap.Logger
+	menuDao *dao.MenuDao
+}
 
-var MenuService = new(menuService)
+// NewMenuService 实例化
+func NewMenuService(log *zap.Logger, menuDao *dao.MenuDao) *MenuService {
+	return &MenuService{log: log, menuDao: menuDao}
+}
 
 const (
+	// 菜单缓存key
 	router_cache_key = "sys:routers"
 )
 
-// 获取菜单表格列表
-func (service *menuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu, err error) {
-	common.LOG.Debug("查询菜单表格参数", zap.Int("PageNum", pageReq.PageNum), zap.Int("PageSize", pageReq.PageSize), zap.String("Keywords", pageReq.Keywords))
-	tx := common.DB.Model(&model.SysMenu{})
-	if pageReq.Keywords != "" {
-		tx = tx.Where("`name` like ?", "%"+pageReq.Keywords+"%")
-	}
-	var menus []model.SysMenu
-	err = tx.Order("`sort` ASC").Find(&menus).Error
+// ListPages 获取菜单表格列表
+func (s *MenuService) ListPages(ctx *gin.Context, pageReq dto.DeptPageReq) (list []s_vo.Menu, err error) {
+	s.log.Debug("查询菜单表格参数", zap.Int("PageNum", pageReq.PageNum), zap.Int("PageSize", pageReq.PageSize), zap.String("Keywords", pageReq.Keywords))
+	menus, err := s.menuDao.Lists(ctx, pageReq)
 	if err != nil {
 		return
 	}
@@ -47,7 +50,7 @@ func (service *menuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu
 			if slices.Contains(cacheIds, parentId) {
 				continue
 			}
-			list = append(list, service.recur(parentId, menus)...)
+			list = append(list, s.recur(ctx, parentId, menus)...)
 			cacheIds = append(cacheIds, parentId)
 		}
 	}
@@ -61,10 +64,9 @@ func (service *menuService) ListPages(pageReq dto.DeptPageReq) (list []s_vo.Menu
 	return list, err
 }
 
-// 根据id获取菜单详情
-func (service *menuService) GetById(id int64) (s_vo.SysMenu, error) {
-	var m model.SysMenu
-	err := common.DB.First(&m, id).Error
+// GetById 根据id获取菜单详情
+func (s *MenuService) GetById(ctx *gin.Context, id int64) (s_vo.SysMenu, error) {
+	m, err := s.menuDao.FindByID(ctx, id)
 	if err != nil {
 		return s_vo.SysMenu{}, err
 	}
@@ -86,33 +88,33 @@ func (service *menuService) GetById(id int64) (s_vo.SysMenu, error) {
 	return vo, nil
 }
 
-// 递归生成部门层级列表
-func (service *menuService) recur(parentId int64, menus []model.SysMenu) (vos []s_vo.Menu) {
+// recur 递归生成部门层级列表
+func (s *MenuService) recur(ctx *gin.Context, parentId int64, menus []model.SysMenu) (vos []s_vo.Menu) {
 	for _, v := range menus {
 		if v.ParentId != parentId {
 			continue
 		}
 		vo := s_vo.Menu{}
 		vo = vo.Format(v)
-		vo.Children = service.recur(v.Id, menus)
+		vo.Children = s.recur(ctx, v.Id, menus)
 		vos = append(vos, vo)
 	}
 	return
 }
 
-// 获取菜单下拉列表
-func (service *menuService) ListOptions() (list []vo.TreeOption) {
+// Options 获取菜单下拉列表
+func (s *MenuService) Options(ctx *gin.Context) (list []vo.TreeOption) {
 	var menus []model.SysMenu
 	err := common.DB.Model(&model.SysMenu{}).Order("`sort` ASC").Find(&menus).Error
 	if err != nil {
 		return
 	}
-	list = service.recurTreeOptions(ROOT_NODE_ID, menus)
+	list = s.recurTreeOptions(ctx, ROOT_NODE_ID, menus)
 	return
 }
 
-// 递归生成菜单下拉层级列表
-func (service *menuService) recurTreeOptions(parentId int64, menus []model.SysMenu) (options []vo.TreeOption) {
+// recurTreeOptions 递归生成菜单下拉层级列表
+func (s *MenuService) recurTreeOptions(ctx *gin.Context, parentId int64, menus []model.SysMenu) (options []vo.TreeOption) {
 	if len(menus) <= 0 {
 		return
 	}
@@ -120,14 +122,14 @@ func (service *menuService) recurTreeOptions(parentId int64, menus []model.SysMe
 		if v.ParentId != parentId {
 			continue
 		}
-		op := vo.TreeOption{Label: v.Name, Value: v.Id, Children: service.recurTreeOptions(v.Id, menus)}
+		op := vo.TreeOption{Label: v.Name, Value: v.Id, Children: s.recurTreeOptions(ctx, v.Id, menus)}
 		options = append(options, op)
 	}
 	return
 }
 
-// 保存菜单
-func (service *menuService) Save(data *model.SysMenu) (err error) {
+// Save 保存菜单
+func (s *MenuService) Save(ctx *gin.Context, data *model.SysMenu) (err error) {
 	switch data.Type {
 	case 2:
 		//目录
@@ -140,11 +142,7 @@ func (service *menuService) Save(data *model.SysMenu) (err error) {
 		//外链
 		data.Component = ""
 	}
-	if data.Id > 0 {
-		err = common.DB.Model(&data).Updates(&data).Error
-	} else {
-		err = common.DB.Model(&data).Create(&data).Error
-	}
+	s.menuDao.Save(ctx, *data)
 	if err != nil {
 		return
 	}
@@ -152,9 +150,9 @@ func (service *menuService) Save(data *model.SysMenu) (err error) {
 	return
 }
 
-// 批量刪除
-func (service *menuService) DeleteByIds(ids []int64) error {
-	err := common.DB.Where("id in ?", ids).Delete(&model.SysMenu{}).Error
+// DeleteByIds 批量刪除
+func (s *MenuService) DeleteByIds(ctx *gin.Context, ids []int64) error {
+	err := s.menuDao.Delete(ctx, ids)
 	if err != nil {
 		return err
 	}
@@ -162,19 +160,18 @@ func (service *menuService) DeleteByIds(ids []int64) error {
 	return err
 }
 
-// 路由列表
-func (service *menuService) ListRoutes() (vos []s_vo.Route) {
+// ListRoutes 路由列表
+func (s *MenuService) ListRoutes(ctx *gin.Context) (vos []s_vo.Route) {
 	err := common.CacheGet(router_cache_key, &vos)
 	if err != nil {
 		return nil
 	}
 	if len(vos) > 0 {
-		common.LOG.Debug("路由缓存获取成功")
+		s.log.Debug("路由缓存获取成功")
 		return
 	}
-	common.LOG.Debug("缓存获取失败，从数据库获取路由")
-	var menus []model.SysMenu
-	err = common.DB.Model(&model.SysMenu{}).Where("type != ?", model.BUTTON).Preload("SysRoles").Find(&menus).Error
+	s.log.Debug("缓存获取失败，从数据库获取路由")
+	menus, err := s.menuDao.ListRoutes(ctx)
 	if err != nil {
 		return nil
 	}
@@ -202,16 +199,16 @@ func (service *menuService) ListRoutes() (vos []s_vo.Route) {
 		}
 		routes = append(routes, r)
 	}
-	vos = service.recurRoutes(ROOT_NODE_ID, routes)
+	vos = s.recurRoutes(ctx, ROOT_NODE_ID, routes)
 	err = common.CacheSet(router_cache_key, &vos, time.Minute*10)
 	if err != nil {
-		common.LOG.Error("设置缓存错误", zap.Error(err))
+		s.log.Error("设置缓存错误", zap.Error(err))
 	}
 	return
 }
 
-// 递归生成菜单路由层级列表
-func (service *menuService) recurRoutes(parentId int64, menus []model.Route) (list []s_vo.Route) {
+// recurRoutes 递归生成菜单路由层级列表
+func (s *MenuService) recurRoutes(ctx *gin.Context, parentId int64, menus []model.Route) (list []s_vo.Route) {
 	if len(menus) <= 0 {
 		return
 	}
@@ -234,7 +231,7 @@ func (service *menuService) recurRoutes(parentId int64, menus []model.Route) (li
 		if v.Type == model.MENU.String() {
 			vo.Name = v.Path
 		}
-		children := service.recurRoutes(v.Id, menus)
+		children := s.recurRoutes(ctx, v.Id, menus)
 		alwaysShow := false
 		for _, c := range children {
 			if !c.Meta.Hidden {
@@ -250,51 +247,24 @@ func (service *menuService) recurRoutes(parentId int64, menus []model.Route) (li
 	return
 }
 
-// 获取菜单资源树形列表
-func (service *menuService) ListResources() []vo.TreeOption {
-	return service.ListOptions()
+// ListResources 获取菜单资源树形列表
+func (s *MenuService) ListResources(ctx *gin.Context) []vo.TreeOption {
+	return s.Options(ctx)
 }
 
-// 修改菜单显示状态
+// UpdateVisible 修改菜单显示状态
 // @param id 菜单id
 // @param visible 是否显示(1->显示；2->隐藏)
-func (service *menuService) UpdateVisible(id int64, visible int) bool {
-	err := common.DB.Model(&model.SysMenu{Id: id}).Update("visible", visible).Error
+func (s *MenuService) UpdateVisible(ctx *gin.Context, id int64, visible int) bool {
+	err := s.menuDao.UpdateVisible(ctx, id, visible)
 	if err != nil {
-		fmt.Println("修改失败")
 		return false
 	}
 	return true
 }
 
-func (service *menuService) ListRolePerms(roles []string) (perms []string) {
-	sql := `
-	SELECT
-            DISTINCT t1.perm
-        FROM
-            sys_menu t1
-                INNER JOIN sys_role_menu t2
-                INNER JOIN sys_role t3
-        WHERE
-            t1.type = ?
-          AND t1.perm IS NOT NULL
-	`
-	var condition string
-	if len(roles) > 0 {
-		condition += " AND t3.CODE IN ("
-		for i, v := range roles {
-			if i != 0 {
-				condition += ","
-			}
-			condition += "'" + v + "'"
-		}
-		condition += ")"
-	} else {
-		condition += "AND t1.id = -1"
-	}
-	err := common.DB.Raw(sql+condition, 4).Scan(&perms).Error
-	if err != nil {
-		return
-	}
+// ListRolePerms 获取角色权限列表
+func (s *MenuService) ListRolePerms(ctx *gin.Context, roles []string) (perms []string) {
+	perms, _ = s.menuDao.GetPermsByRoles(ctx, roles)
 	return
 }

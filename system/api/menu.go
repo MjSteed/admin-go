@@ -10,26 +10,32 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type menuApi struct{}
+// MenuApi 菜单路由接口
+type MenuApi struct {
+	menuService *service.MenuService
+}
 
-var MenuApi = new(menuApi)
+// MenuApi 实例化路由接口
+func NewMenuApi(menuService *service.MenuService) MenuApi {
+	return MenuApi{menuService: menuService}
+}
 
 // 资源(菜单+权限)列表
 // @Router    /api/v1/menus/resources [get]
-func (a *menuApi) ListResources(c *gin.Context) {
-	vo.SuccessData(service.MenuService.ListResources(), c)
+func (a *MenuApi) ListResources(c *gin.Context) {
+	vo.SuccessData(a.menuService.ListResources(c), c)
 }
 
 // 菜单列表
 // @Router    /api/v1/menus [get]
-func (a *menuApi) List(c *gin.Context) {
+func (a *MenuApi) List(c *gin.Context) {
 	var pageParam dto.DeptPageReq
 	err := c.ShouldBindQuery(&pageParam)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	list, err := service.MenuService.ListPages(pageParam)
+	list, err := a.menuService.ListPages(c, pageParam)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -39,25 +45,25 @@ func (a *menuApi) List(c *gin.Context) {
 
 // 菜单下拉列表
 // @Router    /api/v1/menus/options [get]
-func (a *menuApi) ListOptions(c *gin.Context) {
-	vo.SuccessData(service.MenuService.ListOptions(), c)
+func (a *MenuApi) ListOptions(c *gin.Context) {
+	vo.SuccessData(a.menuService.Options(c), c)
 }
 
 // 路由列表
 // @Router    /api/v1/menus/routes [get]
-func (a *menuApi) ListRoutes(c *gin.Context) {
-	vo.SuccessData(service.MenuService.ListRoutes(), c)
+func (a *MenuApi) ListRoutes(c *gin.Context) {
+	vo.SuccessData(a.menuService.ListRoutes(c), c)
 }
 
 // 路由列表
 // @Router    /api/v1/menus/:id [get]
-func (a *menuApi) GetById(c *gin.Context) {
+func (a *MenuApi) GetById(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
 	}
-	menu, err := service.MenuService.GetById(id)
+	menu, err := a.menuService.GetById(c, id)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -67,7 +73,7 @@ func (a *menuApi) GetById(c *gin.Context) {
 
 // 新增菜单
 // @Router    /api/v1/menus [post]
-func (a *menuApi) Save(c *gin.Context) {
+func (a *MenuApi) Save(c *gin.Context) {
 	var d dto.MenuForm
 	err := c.ShouldBindJSON(&d)
 	if err != nil {
@@ -75,7 +81,7 @@ func (a *menuApi) Save(c *gin.Context) {
 		return
 	}
 	m := d.ToMenu()
-	err = service.MenuService.Save(&m)
+	err = a.menuService.Save(c, &m)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -85,7 +91,7 @@ func (a *menuApi) Save(c *gin.Context) {
 
 // 修改菜单
 // @Router    /api/v1/menus [put]
-func (a *menuApi) Update(c *gin.Context) {
+func (a *MenuApi) Update(c *gin.Context) {
 	var d dto.MenuForm
 	err := c.ShouldBindJSON(&d)
 	if err != nil {
@@ -93,7 +99,7 @@ func (a *menuApi) Update(c *gin.Context) {
 		return
 	}
 	m := d.ToMenu()
-	err = service.MenuService.Save(&m)
+	err = a.menuService.Save(c, &m)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return
@@ -103,7 +109,7 @@ func (a *menuApi) Update(c *gin.Context) {
 
 // 删除部门
 // @Router    /api/v1/dept/{ids} [delete]
-func (a *menuApi) BatchDelete(c *gin.Context) {
+func (a *MenuApi) BatchDelete(c *gin.Context) {
 	idsStr := strings.Split(c.Param("ids"), ",")
 	ids := make([]int64, len(idsStr))
 	for _, v := range idsStr {
@@ -113,7 +119,7 @@ func (a *menuApi) BatchDelete(c *gin.Context) {
 		}
 		ids = append(ids, id)
 	}
-	err := service.MenuService.DeleteByIds(ids)
+	err := a.menuService.DeleteByIds(c, ids)
 	if err != nil {
 		vo.FailMsg(err.Error(), c)
 		return

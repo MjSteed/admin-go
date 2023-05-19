@@ -27,17 +27,6 @@ func (rt *DictItemRouter) InitDictTypeRouter(Router *gin.RouterGroup) {
 	// r.GET("/:typeCode/items", api.ListDictItemsByTypeCode)
 }
 
-func (rt *DictItemRouter) InitMenuRouter(Router *gin.RouterGroup) {
-	r := Router.Group("/v1/menus")
-	r.GET("/resources", api.MenuApi.ListResources)
-	r.GET("", api.MenuApi.List)
-	r.GET("/options", api.MenuApi.ListOptions)
-	r.GET("/routes", api.MenuApi.ListRoutes)
-	r.POST("", api.MenuApi.Save)
-	r.PUT("", api.MenuApi.Update)
-	r.DELETE("/:ids", api.MenuApi.BatchDelete)
-}
-
 func (rt *DictItemRouter) InitRolesRouter(Router *gin.RouterGroup) {
 	r := Router.Group("/v1/roles")
 	r.GET("/pages", api.RoleApi.List)

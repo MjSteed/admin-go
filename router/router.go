@@ -39,15 +39,6 @@ func Routers() *gin.Engine {
 		//路由冲突
 		// r.GET("/:typeCode/items", api.ListDictItemsByTypeCode)
 
-		router.GET("/menus/resources", api.MenuApi.ListResources)
-		router.GET("/menus", api.MenuApi.List)
-		router.GET("/menus/options", api.MenuApi.ListOptions)
-		router.GET("/menus/routes", api.MenuApi.ListRoutes)
-		router.GET("/menus/:id", api.MenuApi.GetById)
-		router.POST("/menus", api.MenuApi.Save)
-		router.PUT("/menus/:id", api.MenuApi.Update)
-		router.DELETE("/menus/:ids", api.MenuApi.BatchDelete)
-
 		router.GET("/roles/pages", api.RoleApi.List)
 		router.GET("/roles/options", api.RoleApi.ListOptions)
 		router.GET("/roles/:id", api.RoleApi.GetForm)
