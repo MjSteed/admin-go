@@ -122,3 +122,17 @@ func (d *DictItemDao) ListPages(ctx context.Context, pageReq *dto.DictItemPageRe
 	}
 	return dictItems, total, nil
 }
+
+// GetByCode 根据编码查询
+// @param code 编码
+// @return []SysDictItem
+// @return error
+func (d *DictItemDao) GetByCode(ctx context.Context, code string) ([]model.SysDictItem, error) {
+	var dictItems []model.SysDictItem
+	err := d.db.WithContext(ctx).Where("type_code = ?", code).Find(&dictItems).Error
+	if err != nil {
+		d.log.Warn("查询字典项失败", zap.String("code", code), zap.Error(err))
+		return nil, err
+	}
+	return dictItems, nil
+}

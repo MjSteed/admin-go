@@ -25,14 +25,6 @@ func Routers() *gin.Engine {
 	router := r.Group("/api/v1").Use(middleware.JWTAuth())
 	// sr := system.DictItemRouter{}
 	{
-		router.GET("/dict/types/pages", api.DictTypeApi.ListPages)
-		router.GET("/dict/types/:id/form", api.DictTypeApi.GetForm)
-		router.POST("/dict/types", api.DictTypeApi.Save)
-		router.PUT("/dict/types/:id", api.DictTypeApi.Update)
-		router.DELETE("/dict/types/:ids", api.DictTypeApi.BatchDelete)
-		//路由冲突
-		// r.GET("/:typeCode/items", api.ListDictItemsByTypeCode)
-
 		router.GET("/roles/pages", api.RoleApi.List)
 		router.GET("/roles/options", api.RoleApi.ListOptions)
 		router.GET("/roles/:id", api.RoleApi.GetForm)
