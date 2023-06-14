@@ -15,7 +15,7 @@ func NewDeptRouter(api *api.DeptApi) *DeptRouter {
 	return &DeptRouter{api: api}
 }
 
-// InitDeptRouter 初始化部门路由
+// InitRouter 初始化部门路由
 func (rt *DeptRouter) InitRouter(Router *gin.RouterGroup) {
 	r := Router.Group("/v1/dept")
 	r.GET("", rt.api.ListPages)

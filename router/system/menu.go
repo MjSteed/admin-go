@@ -16,7 +16,7 @@ func NewMenuRouter(api *api.MenuApi) *MenuRouter {
 }
 
 // InitMenuRouter 初始化菜单路由
-func (rt *MenuRouter) InitRouter(Router *gin.RouterGroup) {
+func (rt *MenuRouter) InitMenuRouter(Router *gin.RouterGroup) {
 	r := Router.Group("/v1/menus")
 	r.GET("/resources", rt.api.ListResources)
 	r.GET("", rt.api.List)
